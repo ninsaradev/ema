@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EMA - ප්‍රධාන පිටුව</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <style>
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        :root{
+            --p:#1B5E20;--op:#FFF;--pc:#A5D6A7;--opc:#0A3A0A;
+            --sc:#D0E8D2;--osc:#0C1F12;
+            --sf:#F8FAF6;--scl:#FFF;--sc2:#ECF0EA;--sc3:#E7EAE4;--sc4:#E1E4DE;
+            --os:#191D19;--osv:#414942;--ol:#727970;--olv:#C1C9BF;
+            --er:#BA1A1A;--erc:#FFDAD6;--oer:#FFF;
+            --r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:28px;--r-full:9999px;
+            --e1:0 1px 3px 1px rgba(0,0,0,.08),0 1px 2px 0 rgba(0,0,0,.12);
+            --e2:0 2px 6px 2px rgba(0,0,0,.08),0 1px 2px 0 rgba(0,0,0,.12);
+        }
+        html,body{
+            height:100%;overflow:hidden;
+            font-family:'Noto Sans Sinhala','Roboto',sans-serif;
+            background:var(--sf);color:var(--os);
+        }
+        .hidden{display:none!important}
+
+        .app{display:flex;flex-direction:column;height:100dvh;height:100vh;overflow:hidden}
+        .scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+
+        /* LOADER */
+        .fload{display:none;position:fixed;inset:0;background:var(--sf);z-index:9999;justify-content:center;align-items:center;flex-direction:column;gap:14px}
+        .fload.show{display:flex}
+        .fload p{font-size:13px;color:var(--osv)}
+        .sp{width:32px;height:32px;border:3px solid var(--sc4);border-top-color:var(--p);border-radius:50%;animation:sp .8s linear infinite}
+        .sp.lg{width:42px;height:42px;border-width:4px}
+        @keyframes sp{to{transform:rotate(360deg)}}
+
+        /* TOP BAR */
+        .tb{padding:8px 12px;background:var(--sf);flex-shrink:0;z-index:100}
+        .pill{
+            display:flex;align-items:center;background:var(--scl);
+            border:1px solid var(--olv);border-radius:var(--r-full);
+            padding:4px 6px 4px 4px;gap:8px;
+        }
+        .av{width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid var(--pc);background:var(--sc2);flex-shrink:0;cursor:pointer}
+        .av:active{opacity:.7}
+        .av-ph{width:34px;height:34px;border-radius:50%;background:var(--pc);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer}
+        .av-ph .material-icons-round{font-size:18px;color:var(--opc)}
+        .tb-info{flex:1;min-width:0}
+        .tb-nm{font-size:12px;font-weight:600;color:var(--os);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .tb-id{font-size:9px;font-weight:500;color:var(--osv);font-family:'Roboto',monospace;letter-spacing:1px}
+        .ib{width:36px;height:36px;border:none;background:transparent;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--osv);transition:background .15s;flex-shrink:0}
+        .ib:hover{background:var(--sc3)}
+
+        /* DROPDOWN */
+        .ddo{display:none;position:fixed;inset:0;z-index:200}
+        .ddo.show{display:block}
+        .ddm{position:absolute;top:52px;right:12px;background:var(--scl);border:1px solid var(--olv);border-radius:var(--r-md);min-width:220px;box-shadow:var(--e2);overflow:hidden;animation:di .15s ease-out;z-index:201}
+        @keyframes di{from{opacity:0;transform:translateY(-6px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+        .ddi{display:flex;align-items:center;gap:10px;padding:11px 14px;border:none;background:transparent;width:100%;text-align:left;font-family:inherit;font-size:12px;color:var(--os);cursor:pointer;transition:background .12s}
+        .ddi:hover{background:var(--sc2)}
+        .ddi .material-icons-round{font-size:18px;color:var(--osv)}
+        .ddv{height:1px;background:var(--olv);margin:2px 0}
+        .ddi.dng{color:var(--er)}.ddi.dng .material-icons-round{color:var(--er)}
+
+        /* CONTENT */
+        .ct{padding:2px 12px 20px;max-width:600px;margin:0 auto}
+
+        /* STATS */
+        .sr{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:8px}
+        .sc{background:var(--scl);border:1px solid var(--olv);border-radius:var(--r-sm);padding:8px 4px;text-align:center}
+        .sib{width:26px;height:26px;border-radius:5px;display:flex;align-items:center;justify-content:center;margin:0 auto 3px}
+        .sib .material-icons-round{font-size:14px}
+        .sib.g{background:var(--pc);color:var(--opc)}
+        .sib.t{background:#B2DFDB;color:#004D40}
+        .sib.a{background:#FFF8E1;color:#F57F17}
+        .sib.b{background:#E3F2FD;color:#0D47A1}
+        .sv{font-size:18px;font-weight:700;color:var(--os);font-family:'Roboto',monospace}
+        .sl{font-size:9px;color:var(--osv)}
+
+        /* EAZ */
+        .eaz{background:linear-gradient(135deg,#F9A825,#F57F17);border-radius:var(--r-md);padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:transform .12s}
+        .eaz:active{transform:scale(.98)}
+        .eazi{width:34px;height:34px;background:rgba(255,255,255,.25);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .eazi .material-icons-round{font-size:18px;color:#FFF}
+        .eazt{flex:1;color:#FFF}
+        .eazt h4{font-size:12px;font-weight:600}
+        .eazt p{font-size:9px;opacity:.9;margin-top:1px}
+        .eaza{color:rgba(255,255,255,.7);flex-shrink:0}
+        .eaza .material-icons-round{font-size:18px}
+
+        /* QUICK */
+        .qr{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}
+        .qb{display:flex;align-items:center;justify-content:center;gap:5px;padding:11px;background:var(--p);color:var(--op);border:none;border-radius:var(--r-md);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .12s}
+        .qb:hover{box-shadow:var(--e1)}.qb:active{transform:scale(.97)}
+        .qb .material-icons-round{font-size:16px}
+        .qb.s2{background:var(--sc);color:var(--osc)}
+
+        /* NAV */
+        .ng{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:10px}
+        .nc{background:var(--scl);border:1px solid var(--olv);border-radius:var(--r-sm);padding:12px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;transition:background .12s;text-decoration:none;color:var(--os)}
+        .nc:hover{background:var(--sc2)}
+        .nci{width:30px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+        .nci .material-icons-round{font-size:16px}
+        .nc span{font-size:9px;font-weight:500;text-align:center}
+
+        /* RECENT */
+        .sec-t{font-size:12px;font-weight:600;color:var(--os);margin:10px 0 6px;display:flex;align-items:center;gap:5px}
+        .sec-t .material-icons-round{font-size:16px;color:var(--p)}
+        .rep-list{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+        .rep-card{
+            background:var(--scl);border:1px solid var(--olv);
+            border-radius:var(--r-sm);padding:10px 12px;
+            display:flex;align-items:flex-start;gap:10px;
+        }
+        .rep-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:3px}
+        .rep-dot.bl{background:#1565C0}.rep-dot.rd{background:#C62828}
+        .rep-body{flex:1;min-width:0}
+        .rep-title{font-size:12px;font-weight:600;color:var(--os);margin-bottom:1px}
+        .rep-sub{font-size:10px;color:var(--osv);line-height:1.4}
+        .rep-time{font-size:9px;color:var(--ol);margin-top:2px;font-family:'Roboto',sans-serif}
+        .rep-agent{font-size:9px;color:#F57F17;display:flex;align-items:center;gap:3px;margin-top:2px}
+        .rep-agent .material-icons-round{font-size:12px}
+        .no-rep{font-size:11px;color:var(--osv);text-align:center;padding:16px}
+
+        /* FOOTER */
+        .ft{text-align:center;padding:8px 0 4px;font-size:10px;color:var(--ol)}
+        .ft strong{color:var(--osv)}
+
+        /* SCRIM */
+        .scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,.32);justify-content:center;align-items:center;z-index:500;padding:14px;overflow-y:auto}
+        .scrim.show{display:flex}
+        .dlg{background:var(--scl);border-radius:var(--r-xl);padding:20px;width:100%;max-width:420px;max-height:88vh;overflow-y:auto;animation:dIn .2s ease-out;position:relative}
+        @keyframes dIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+        .dlg-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+        .dlg-h h3{font-size:15px;font-weight:600;color:var(--os);flex:1;padding-right:6px}
+        .dlg h3.c{text-align:center;margin-bottom:6px}
+        .dlg p{font-size:12px;color:var(--osv);line-height:1.5;margin-bottom:4px}
+        .da{display:flex;justify-content:flex-end;gap:6px;margin-top:14px;flex-wrap:wrap}
+
+        /* PROFILE CARD */
+        .pc-content{display:flex;flex-direction:column;align-items:center;gap:4px}
+        .pc-av{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--pc)}
+        .pc-av-ph{width:80px;height:80px;border-radius:50%;background:var(--pc);display:flex;align-items:center;justify-content:center}
+        .pc-av-ph .material-icons-round{font-size:36px;color:var(--opc)}
+        .pc-nm{font-size:16px;font-weight:600;color:var(--os);margin-top:4px}
+        .pc-id{font-size:12px;font-weight:500;color:var(--p);font-family:'Roboto',monospace;letter-spacing:2px}
+        .pdl{width:100%;margin-top:10px}
+        .pdi{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:var(--r-sm);background:var(--sc2);margin-bottom:5px}
+        .pdi .material-icons-round{font-size:18px;color:var(--p);flex-shrink:0}
+        .pdi-c{flex:1;min-width:0}
+        .pdi-l{font-size:9px;color:var(--osv);text-transform:uppercase;letter-spacing:.3px}
+        .pdi-v{font-size:12px;font-weight:500;color:var(--os);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+        /* FIELDS */
+        .mf{position:relative;margin-bottom:14px;width:100%}
+        .mf input{width:100%;padding:16px 12px 4px;border:1px solid var(--ol);border-radius:var(--r-sm);font-size:13px;font-family:inherit;background:transparent;color:var(--os);outline:none;transition:border-color .2s}
+        .mf input:focus{border-color:var(--p);border-width:2px;padding:15px 11px 3px}
+        .mf label{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--osv);pointer-events:none;transition:all .2s;background:var(--scl);padding:0 3px}
+        .mf input:focus+label,.mf input:not(:placeholder-shown)+label{top:0;font-size:10px;color:var(--p)}
+        .phr{display:flex;border:1px solid var(--ol);border-radius:var(--r-sm);overflow:hidden;margin-bottom:14px;transition:border-color .2s}
+        .phr:focus-within{border-color:var(--p);border-width:2px}
+        .phx{padding:12px 8px;background:var(--sc2);font-size:13px;font-weight:500;border-right:1px solid var(--olv);display:flex;align-items:center}
+        .phr input{flex:1;padding:12px 8px;border:none;font-size:13px;font-family:inherit;background:transparent;color:var(--os);outline:none}
+
+        /* BUTTONS */
+        .btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 16px;border:none;border-radius:var(--r-full);font-size:12px;font-weight:500;font-family:inherit;cursor:pointer;transition:all .15s;min-height:36px}
+        .btn .material-icons-round{font-size:16px}
+        .btn-f{background:var(--p);color:var(--op)}.btn-f:hover{box-shadow:var(--e1)}
+        .btn-o{background:transparent;color:var(--p);border:1px solid var(--ol)}.btn-o:hover{background:rgba(27,94,32,.08)}
+        .btn-t{background:transparent;color:var(--p);padding:7px 10px;min-height:auto}.btn-t:hover{background:rgba(27,94,32,.06);border-radius:var(--r-sm)}
+        .btn-d{background:var(--er);color:var(--oer)}
+        .btn-w{width:100%}
+
+        /* SNACKBAR */
+        .snk{position:fixed;bottom:14px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--os);color:var(--sf);padding:10px 16px;border-radius:var(--r-sm);font-size:11px;z-index:3000;transition:transform .3s;max-width:88%;font-family:inherit}
+        .snk.show{transform:translateX(-50%) translateY(0)}
+
+        /* TIMER */
+        .tw{display:flex;flex-direction:column;align-items:center;gap:8px;margin:14px 0}
+        .tc{width:64px;height:64px;position:relative}
+        .tc svg{width:100%;height:100%;transform:rotate(-90deg)}
+        .tc .trk{fill:none;stroke:var(--sc4);stroke-width:4}
+        .tc .prg{fill:none;stroke:var(--p);stroke-width:4;stroke-linecap:round;stroke-dasharray:176;stroke-dashoffset:0;transition:stroke-dashoffset 1s linear}
+        .tc .tt{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:700;color:var(--p);font-family:'Roboto'}
+
+        /* HOLD */
+        .hld{width:100%;padding:11px 16px;border:2px solid var(--er);border-radius:var(--r-full);background:transparent;color:var(--er);font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;position:relative;overflow:hidden;min-height:40px}
+        .hld .hf{position:absolute;top:0;left:0;height:100%;width:0;background:var(--er);z-index:0}
+        .hld .hl{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:5px}
+        .hld.filling .hl{color:var(--oer)}
+        .hh{font-size:9px;color:var(--osv);text-align:center;margin-top:3px}
+
+        /* AGENT */
+        .al{list-style:none;margin:10px 0}
+        .al li{display:flex;gap:8px;padding:6px 0;font-size:11px;color:var(--osv);line-height:1.4;border-bottom:1px solid var(--sc2)}
+        .al li:last-child{border-bottom:none}
+        .al li .material-icons-round{font-size:15px;color:var(--p);flex-shrink:0;margin-top:1px}
+        .bdg{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:var(--r-full);font-size:10px;font-weight:500}
+        .bdg.pnd{background:#FFF3E0;color:#E65100}.bdg.app{background:#E8F5E9;color:#1B5E20}.bdg.rej{background:var(--erc);color:var(--er)}
+        .bdg .material-icons-round{font-size:12px}
+        .eid{background:var(--sc2);border-radius:var(--r-md);padding:12px;text-align:center;margin:8px 0}
+        .eid .el{font-size:9px;color:var(--osv);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+        .eid .ev{font-size:22px;font-weight:700;color:var(--p);letter-spacing:3px;font-family:'Roboto',monospace}
+
+        /* CAROUSEL */
+        .cs{display:none;flex-direction:column;align-items:center;width:100%}.cs.active{display:flex}
+        .sb{width:40px;height:40px;background:var(--pc);border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+        .sb .material-icons-round{font-size:20px;color:var(--opc)}
+        .cbs{display:flex;flex-direction:column;gap:8px;width:100%;margin-top:10px}
+        .cb{display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--olv);border-radius:var(--r-md);background:var(--scl);cursor:pointer;transition:all .12s;text-align:left;font-family:inherit;color:var(--os)}
+        .cb:hover{background:var(--sc2);border-color:var(--p)}
+        .cb .material-icons-round{font-size:18px;color:var(--p);flex-shrink:0}
+        .cbt{flex:1}.cbt strong{font-size:11px;display:block;margin-bottom:1px}.cbt span{font-size:9px;color:var(--osv)}
+        .iua{width:100%;border:2px dashed var(--olv);border-radius:var(--r-md);padding:14px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;margin-bottom:8px;background:var(--sc2)}
+        .iua:hover{border-color:var(--p)}
+        .iua .material-icons-round{font-size:24px;color:var(--ol)}
+        .iua p{font-size:10px;color:var(--osv)}
+        .iua img{max-width:100%;max-height:80px;border-radius:var(--r-sm);object-fit:contain}
+        .dg{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0;max-height:180px;overflow-y:auto}
+        .dc{display:flex;align-items:center;gap:2px;padding:5px 8px;border:1px solid var(--olv);border-radius:var(--r-full);font-size:10px;cursor:pointer;transition:all .12s;background:var(--scl);color:var(--os);user-select:none}
+        .dc.sel{background:var(--p);color:var(--op);border-color:var(--p)}
+        .dc .material-icons-round{font-size:12px}
+        .phl{margin:8px 0}
+        .phi{display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--sc2);border-radius:var(--r-sm);margin-bottom:4px}
+        .phi .phn{flex:1;font-size:12px;font-family:'Roboto',monospace;color:var(--os)}
+        .phi .phd{font-size:9px;color:var(--osv);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .phdb{width:30px;height:30px;border:none;background:var(--erc);border-radius:var(--r-full);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--er);flex-shrink:0}
+        .phdb:hover{background:#FFCDD2}
+        .phdb .material-icons-round{font-size:16px}
+        .apb{display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;border:1px dashed var(--olv);border-radius:var(--r-sm);background:transparent;width:100%;cursor:pointer;font-family:inherit;font-size:11px;color:var(--p)}
+        .apb:hover{background:var(--sc2)}
+        .apb .material-icons-round{font-size:16px}
+        .eaw{display:flex;flex-direction:column;align-items:center;gap:6px;margin-bottom:12px}
+        .eav{width:68px;height:68px;border-radius:50%;object-fit:cover;border:3px solid var(--pc);cursor:pointer}
+        .eavp{width:68px;height:68px;border-radius:50%;background:var(--pc);display:flex;align-items:center;justify-content:center;cursor:pointer}
+        .eavp .material-icons-round{font-size:26px;color:var(--opc)}
+        .ec{font-size:9px;color:var(--osv)}
+        .rc{background:var(--erc);border-radius:var(--r-sm);padding:10px 12px;margin:8px 0}
+        .rc h4{font-size:11px;color:var(--er);margin-bottom:3px;display:flex;align-items:center;gap:4px}
+        .rc ul{list-style:none}.rc ul li{font-size:10px;color:var(--er);padding:1px 0;display:flex;align-items:flex-start;gap:4px}
+        .rc ul li .material-icons-round{font-size:11px;margin-top:2px}
+        .otr{display:flex;gap:5px;justify-content:center;margin-bottom:12px}
+        .oti{width:36px;height:40px;border:1px solid var(--ol);border-radius:var(--r-sm);text-align:center;font-size:16px;font-weight:600;font-family:'Roboto';color:var(--os);outline:none}
+        .oti:focus{border-color:var(--p);border-width:2px}
+    </style>
+</head>
+<body>
+<div class="app">
+    <div class="fload show" id="pl"><div class="sp lg"></div><p>දත්ත පූරණය වෙමින්...</p></div>
+
+    <!-- LOCATION -->
+    <div class="scrim" id="locD">
+        <div class="dlg" style="max-width:340px">
+            <div style="width:48px;height:48px;border-radius:50%;background:var(--pc);display:flex;align-items:center;justify-content:center;margin:0 auto 10px"><span class="material-icons-round" style="font-size:24px;color:var(--opc)">location_on</span></div>
+            <h3 class="c">ස්ථාන ප්‍රවේශය අවශ්‍යයි</h3>
+            <p style="text-align:center">EMA භාවිතා කිරීමට ස්ථානයට ප්‍රවේශ වීමට අවසර දෙන්න.</p>
+            <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px">
+                <button class="btn btn-f btn-w" id="gLoc"><span class="material-icons-round">my_location</span>ස්ථානය ලබා දෙන්න</button>
+                <button class="btn btn-t btn-w" id="cLoc">පසුව</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOP BAR -->
+    <div class="tb">
+        <div class="pill">
+            <div class="av-ph" id="tAv"><span class="material-icons-round">person</span></div>
+            <div class="tb-info"><div class="tb-nm" id="tNm">---</div><div class="tb-id" id="tId">---</div></div>
+            <button class="ib" id="mB"><span class="material-icons-round">menu</span></button>
+        </div>
+    </div>
+
+    <!-- DD -->
+    <div class="ddo" id="ddO">
+        <div class="ddm">
+            <button class="ddi" id="mEP"><span class="material-icons-round">edit</span>පැතිකඩ සංස්කරණය</button>
+            <button class="ddi" id="mAS"><span class="material-icons-round">shield</span>නියෝජිත තත්ත්වය</button>
+            <button class="ddi" id="mAch"><span class="material-icons-round">emoji_events</span>ජයග්‍රහණ</button>
+            <button class="ddi" id="mCo"><span class="material-icons-round">volunteer_activism</span>දායකත්වයන්</button>
+            <div class="ddv"></div>
+            <button class="ddi dng" id="mSO"><span class="material-icons-round">logout</span>පිටවීම</button>
+        </div>
+    </div>
+
+    <!-- SCROLL -->
+    <div class="scroll">
+        <div class="ct">
+            <div class="sr">
+                <div class="sc"><div class="sib g"><span class="material-icons-round">visibility</span></div><div class="sv" id="stSight">0</div><div class="sl">නිරීක්ෂණ</div></div>
+                <div class="sc"><div class="sib t"><span class="material-icons-round">location_on</span></div><div class="sv" id="stLoc">0</div><div class="sl">ස්ථාන</div></div>
+                <div class="sc"><div class="sib a"><span class="material-icons-round">warning</span></div><div class="sv" id="stAcc">0</div><div class="sl">අනතුරු</div></div>
+                <div class="sc"><div class="sib b"><span class="material-icons-round">assessment</span></div><div class="sv" id="stTotal">0</div><div class="sl">මුළු වාර්තා</div></div>
+            </div>
+            <div class="eaz" id="eazB">
+                <div class="eazi"><span class="material-icons-round">cell_tower</span></div>
+                <div class="eazt"><h4>EazElephant සේවාව</h4><p>SMS මඟින් අලි දැනුම්දීම්</p></div>
+                <div class="eaza"><span class="material-icons-round">chevron_right</span></div>
+            </div>
+            <div class="qr">
+                <button class="qb" onclick="location.href='rep.html'"><span class="material-icons-round">flag</span>වාර්තා කරන්න</button>
+                <button class="qb s2" onclick="location.href='sigh.html'"><span class="material-icons-round">explore</span>නිරීක්ෂණ</button>
+            </div>
+            <div class="ng">
+                <a class="nc" href="myreports.html"><div class="nci" style="background:var(--pc)"><span class="material-icons-round" style="color:var(--opc)">description</span></div><span>මගේ වාර්තා</span></a>
+                <a class="nc" href="feed.html"><div class="nci" style="background:#E3F2FD"><span class="material-icons-round" style="color:#0D47A1">dynamic_feed</span></div><span>පෝෂක</span></a>
+                <a class="nc" href="analytics.html"><div class="nci" style="background:#FFF8E1"><span class="material-icons-round" style="color:#F57F17">analytics</span></div><span>විශ්ලේෂණ</span></a>
+                <a class="nc" href="ai.html"><div class="nci" style="background:#F3E5F5"><span class="material-icons-round" style="color:#7B1FA2">smart_toy</span></div><span>AI</span></a>
+            </div>
+            <div class="sec-t"><span class="material-icons-round">history</span>මෑත වාර්තා</div>
+            <div class="rep-list" id="repList"><div class="no-rep">පූරණය වෙමින්...</div></div>
+            <div class="ft">නිර්මාණය <strong>Aveesha Ninsara</strong> විසිනි</div>
+        </div>
+    </div>
+</div>
+
+<!-- PROFILE VIEW -->
+<div class="scrim" id="prfD">
+    <div class="dlg" style="max-width:360px">
+        <div class="dlg-h"><h3>මගේ පැතිකඩ</h3><button class="ib" id="cPrf"><span class="material-icons-round">close</span></button></div>
+        <div class="pc-content">
+            <div id="pcAv"></div>
+            <div class="pc-nm" id="pcNm">---</div>
+            <div class="pc-id" id="pcId">---</div>
+            <div class="pdl">
+                <div class="pdi"><span class="material-icons-round">phone</span><div class="pdi-c"><div class="pdi-l">දුරකථන</div><div class="pdi-v" id="pcPh">---</div></div></div>
+                <div class="pdi"><span class="material-icons-round">email</span><div class="pdi-c"><div class="pdi-l">විද්‍යුත් තැපෑල</div><div class="pdi-v" id="pcEm">---</div></div></div>
+                <div class="pdi"><span class="material-icons-round">calendar_today</span><div class="pdi-c"><div class="pdi-l">ලියාපදිංචිය</div><div class="pdi-v" id="pcDt">---</div></div></div>
+                <div class="pdi hidden" id="pcAR"><span class="material-icons-round">shield</span><div class="pdi-c"><div class="pdi-l">නියෝජිත</div><div class="pdi-v" id="pcAg">---</div></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- EDIT PROFILE -->
+<div class="scrim" id="edD">
+    <div class="dlg">
+        <div class="dlg-h"><h3>පැතිකඩ සංස්කරණය</h3><button class="ib" id="cEd"><span class="material-icons-round">close</span></button></div>
+        <div class="eaw"><div id="edAvW" class="eavp"><span class="material-icons-round">person</span></div><input type="file" id="edPI" accept="image/*" hidden><button class="btn btn-t" id="edPB"><span class="material-icons-round">photo_camera</span>ඡායාරූපය</button><div class="ec" id="edCt">3/3</div></div>
+        <div class="mf"><input type="text" id="edNm" placeholder=" "><label>සම්පූර්ණ නම</label></div>
+        <div class="mf"><input type="tel" id="edPh" placeholder=" "><label>දුරකථන</label></div>
+        <div class="mf"><input type="email" id="edEm" placeholder=" "><label>විද්‍යුත් තැපෑල</label></div>
+        <div class="da"><button class="btn btn-t" id="xEd">අවලංගුයි</button><button class="btn btn-f" id="svEd"><span class="material-icons-round">save</span>සුරකින්න</button></div>
+    </div>
+</div>
+
+<!-- SIGN OUT -->
+<div class="scrim" id="soD">
+    <div class="dlg" style="max-width:340px">
+        <div style="width:48px;height:48px;border-radius:50%;background:var(--erc);display:flex;align-items:center;justify-content:center;margin:0 auto 10px"><span class="material-icons-round" style="font-size:24px;color:var(--er)">logout</span></div>
+        <h3 class="c">පිටවීම</h3>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-top:14px">
+            <button class="btn btn-o btn-w" id="soO"><span class="material-icons-round">logout</span>පිටවීම පමණි</button>
+            <button class="btn btn-d btn-w" id="soX"><span class="material-icons-round">delete_forever</span>දත්ත මකා පිටවීම</button>
+            <button class="btn btn-t btn-w" id="soC">අවලංගුයි</button>
+        </div>
+    </div>
+</div>
+
+<!-- TIMER -->
+<div class="scrim" id="tmD">
+    <div class="dlg" style="max-width:300px">
+        <div style="width:48px;height:48px;border-radius:50%;background:var(--pc);display:flex;align-items:center;justify-content:center;margin:0 auto 10px"><span class="material-icons-round" style="font-size:24px;color:var(--opc)">timer</span></div>
+        <h3 class="c">පිටවීම...</h3>
+        <div class="tw"><div class="tc"><svg viewBox="0 0 72 72"><circle class="trk" cx="36" cy="36" r="28"/><circle class="prg" id="tmP" cx="36" cy="36" r="28"/></svg><div class="tt" id="tmT">5</div></div></div>
+        <div class="da" style="justify-content:center"><button class="btn btn-o" id="tmC"><span class="material-icons-round">close</span>අවලංගුයි</button></div>
+    </div>
+</div>
+
+<!-- HOLD DELETE -->
+<div class="scrim" id="hdD">
+    <div class="dlg" style="max-width:340px">
+        <div style="width:48px;height:48px;border-radius:50%;background:var(--erc);display:flex;align-items:center;justify-content:center;margin:0 auto 10px"><span class="material-icons-round" style="font-size:24px;color:var(--er)">delete_forever</span></div>
+        <h3 class="c">දත්ත මකා පිටවීම</h3>
+        <p style="text-align:center">සියලුම දත්ත ස්ථිරවම මැකේ.</p>
+        <div style="margin:14px 0"><button class="hld" id="hBtn"><div class="hf" id="hFl"></div><div class="hl"><span class="material-icons-round">touch_app</span>ඔබාගෙන සිටින්න</div></button><div class="hh">තත්පර 5ක්</div></div>
+        <div class="da" style="justify-content:center"><button class="btn btn-t" id="hC">අවලංගුයි</button></div>
+    </div>
+</div>
+
+<!-- AGENT STATUS -->
+<div class="scrim" id="agD">
+    <div class="dlg">
+        <div class="dlg-h"><h3>නියෝජිත තත්ත්වය</h3><button class="ib" id="cAg"><span class="material-icons-round">close</span></button></div>
+        <ul class="al">
+            <li><span class="material-icons-round">verified_user</span><span>වැරදි හෝ සාවද්‍ය දත්ත සමාලෝචනය කර පරීක්ෂා කළ හැක</span></li>
+            <li><span class="material-icons-round">emoji_events</span><span>විශේෂ නිලතල හා ජයග්‍රහණ ලබා ගත හැක</span></li>
+            <li><span class="material-icons-round">workspace_premium</span><span>දායකත්වය සඳහා සම්මාන</span></li>
+            <li><span class="material-icons-round">groups</span><span>නියෝජිත ප්‍රජාව සමඟ සම්බන්ධ වන්න</span></li>
+            <li><span class="material-icons-round">security</span><span>EMA විශ්වසනීයත්වය පවත්වන්න</span></li>
+        </ul>
+        <div id="agSA"></div>
+        <button class="btn btn-f btn-w" id="rgAg" style="margin-top:10px"><span class="material-icons-round">how_to_reg</span>ලියාපදිංචි වන්න</button>
+    </div>
+</div>
+
+<!-- AGENT REG -->
+<div class="scrim" id="arD">
+    <div class="dlg">
+        <div class="dlg-h"><h3>නියෝජිත ලියාපදිංචිය</h3><button class="ib" id="cAR"><span class="material-icons-round">close</span></button></div>
+        <div class="cs active" id="r1"><div class="sb"><span class="material-icons-round">badge</span></div><div class="mf" style="width:100%"><input type="text" id="rNic" placeholder=" "><label>ජා.හැ.අ.</label></div><p style="font-weight:500;font-size:11px;width:100%">ඉදිරිපස</p><div class="iua" id="nFA"><span class="material-icons-round">add_photo_alternate</span><p>ඡායාරූපය</p></div><input type="file" id="nFI" accept="image/*" hidden><p style="font-weight:500;font-size:11px;width:100%">පසුපස</p><div class="iua" id="nBA"><span class="material-icons-round">add_photo_alternate</span><p>ඡායාරූපය</p></div><input type="file" id="nBI" accept="image/*" hidden><button class="btn btn-f btn-w" id="rN1" style="margin-top:8px">ඊළඟ<span class="material-icons-round">arrow_forward</span></button></div>
+        <div class="cs" id="r2"><div class="sb"><span class="material-icons-round">dataset</span></div><div class="cbs"><button class="cb" id="rUE"><span class="material-icons-round">cloud_download</span><div class="cbt"><strong>පවතින දත්ත</strong><span>ස්වයංක්‍රීයව</span></div></button><button class="cb" id="rMn"><span class="material-icons-round">edit_note</span><div class="cbt"><strong>අතින් ඇතුළත්</strong><span>නම, දුරකථන, තැපෑල</span></div></button></div><button class="btn btn-t btn-w" id="rB1" style="margin-top:6px"><span class="material-icons-round">arrow_back</span>ආපසු</button></div>
+        <div class="cs" id="r3"><div class="sb"><span class="material-icons-round">edit_note</span></div><div style="width:100%"><div class="mf"><input type="text" id="rMN" placeholder=" "><label>නම</label></div><div class="mf"><input type="tel" id="rMP" placeholder=" "><label>දුරකථන</label></div><div class="mf"><input type="email" id="rME" placeholder=" "><label>තැපෑල</label></div></div><div style="display:flex;gap:6px;width:100%"><button class="btn btn-o" id="rB2" style="flex:1"><span class="material-icons-round">arrow_back</span></button><button class="btn btn-f" id="rMS" style="flex:1"><span class="material-icons-round">send</span>ඉදිරිපත්</button></div></div>
+        <div class="cs" id="rL"><div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:30px 0"><div class="sp lg"></div><p style="font-size:12px;color:var(--osv)">සුරකිමින්...</p></div></div>
+        <div class="cs" id="rDn"><div style="width:48px;height:48px;border-radius:50%;background:var(--pc);display:flex;align-items:center;justify-content:center;margin:0 auto 10px"><span class="material-icons-round" style="font-size:24px;color:var(--opc)">check_circle</span></div><h3 class="c">සාර්ථකයි</h3><div class="eid"><div class="el">නියෝජිත අංකය</div><div class="ev" id="rAID">---</div></div><button class="btn btn-f btn-w" id="rOk"><span class="material-icons-round">done</span>අවසන්</button></div>
+    </div>
+</div>
+
+<!-- EAZ -->
+<div class="scrim" id="eD">
+    <div class="dlg">
+        <div class="dlg-h"><h3>EazElephant සේවාව</h3><button class="ib" id="cEaz"><span class="material-icons-round">close</span></button></div>
+        <div class="cs active" id="e1"><p style="font-weight:500;font-size:12px;width:100%">ලියාපදිංචි අංක</p><p style="font-size:10px;margin-bottom:6px;width:100%">උපරිම 10ක්</p><div class="phl" id="ePL"></div><button class="apb" id="eAP"><span class="material-icons-round">add_circle</span>එක් කරන්න</button></div>
+        <div class="cs" id="e2"><div class="sb"><span class="material-icons-round">phone_android</span></div><div class="phr"><span class="phx">+94</span><input type="tel" id="ePh" placeholder="7X XXX XXXX" maxlength="10"></div><div style="display:flex;gap:6px;width:100%"><button class="btn btn-o" id="ePBk" style="flex:1"><span class="material-icons-round">arrow_back</span></button><button class="btn btn-f" id="eSO" style="flex:1"><span class="material-icons-round">send</span>OTP</button></div></div>
+        <div class="cs" id="e3"><div class="sb"><span class="material-icons-round">pin</span></div><p style="font-size:11px;margin-bottom:10px">OTP අංක 6 ඇතුළත් කරන්න</p><div class="otr" id="oR"></div><button class="btn btn-f btn-w" id="eVO"><span class="material-icons-round">verified</span>තහවුරු</button></div>
+        <div class="cs" id="e4"><div class="sb"><span class="material-icons-round">map</span></div><p style="font-size:11px;margin-bottom:6px">දිස්ත්‍රික්ක (උපරිම 5)</p><div class="dg" id="dG"></div><button class="btn btn-f btn-w" id="eRg" style="margin-top:8px"><span class="material-icons-round">how_to_reg</span>ලියාපදිංචි</button></div>
+        <div class="cs" id="e5"><div style="width:48px;height:48px;border-radius:50%;background:var(--pc);display:flex;align-items:center;justify-content:center;margin:0 auto 10px"><span class="material-icons-round" style="font-size:24px;color:var(--opc)">check_circle</span></div><h3 class="c">සාර්ථකයි</h3><button class="btn btn-f btn-w" id="eOk" style="margin-top:10px"><span class="material-icons-round">done</span>අවසන්</button></div>
+    </div>
+</div>
+
+<!-- DEL PHONE CONFIRM -->
+<div class="scrim" id="dpD">
+    <div class="dlg" style="max-width:320px">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--erc);display:flex;align-items:center;justify-content:center;margin:0 auto 8px"><span class="material-icons-round" style="font-size:22px;color:var(--er)">phone_disabled</span></div>
+        <h3 class="c" style="font-size:14px">අංකය ඉවත් කරන්න</h3>
+        <p style="text-align:center" id="dpN">---</p>
+        <div class="da" style="justify-content:center;gap:6px;margin-top:12px">
+            <button class="btn btn-t" id="dpC">අවලංගුයි</button>
+            <button class="btn btn-d" id="dpY"><span class="material-icons-round">delete</span>ඉවත්</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import{getDatabase,ref,set,get,child,remove,update,push}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js";
+const fb=initializeApp({apiKey:"AIzaSyBxhaRpjccuhoKE3T8WYRihy1rDXtRhGO4",authDomain:"ema-4-b10bd.firebaseapp.com",databaseURL:"https://ema-4-b10bd-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"ema-4-b10bd",storageBucket:"ema-4-b10bd.firebasestorage.app",messagingSenderId:"149141817573",appId:"1:149141817573:web:409bfb4d9c2b84cf742c0c"});
+const db=getDatabase(fb);
+const SMS_B='2978|LJtLlcBp7kBtuwPflj9rgkFSB4nb9FQIVMgNhOU918611bc8',SMS_S='TextLKDemo';
+const DI=["කොළඹ","ගම්පහ","කළුතර","මහනුවර","මාතලේ","නුවරඑළිය","ගාල්ල","මාතර","හම්බන්තොට","යාපනය","කිලිනොච්චි","මන්නාරම","වව්නියාව","මුලතිව්","මඩකලපුව","අම්පාර","ත්‍රිකුණාමලය","කුරුණෑගල","පුත්තලම","අනුරාධපුරය","පොළොන්නරුව","බදුල්ල","මොණරාගල","රත්නපුර","කෑගල්ල"];
+const DK=["colombo","gampaha","kalutara","kandy","matale","nuwaraeliya","galle","matara","hambantota","jaffna","kilinochchi","mannar","vavuniya","mullaitivu","batticaloa","ampara","trincomalee","kurunegala","puttalam","anuradhapura","polonnaruwa","badulla","monaragala","ratnapura","kegalle"];
+
+let U=null,eid=null,locOk=false,soTm=null,hIv=null,hSt=0,eOtp=null,ePhn=null,nFB=null,nBB=null,ePB=null,dpI=-1,selD=[];
+const $=i=>document.getElementById(i);const S=i=>$(i).classList.add('show');const H=i=>$(i).classList.remove('show');
+function snk(m){let s=document.querySelector('.snk');if(!s){s=document.createElement('div');s.className='snk';document.body.appendChild(s)}s.textContent=m;s.classList.add('show');setTimeout(()=>s.classList.remove('show'),3e3)}
+const fk=i=>i.replace(/-/g,'_');const gAI=()=>Math.floor(1e3+Math.random()*9e3)+'-A';const g6=()=>Math.floor(1e5+Math.random()*9e5).toString();
+const vSL=p=>/^0?7[0-9]{8}$/.test(p.replace(/\s/g,''));
+function f94(p){let f=p.replace(/\s/g,'');if(f.startsWith('0'))f='94'+f.substring(1);else if(!f.startsWith('94'))f='94'+f;return'+'+f}
+async function cImg(f,mk=80){return new Promise(r=>{const fr=new FileReader();fr.onload=e=>{const i=new Image();i.onload=()=>{const c=document.createElement('canvas');let w=i.width,h=i.height;const mx=500;if(w>mx||h>mx){const rt=Math.min(mx/w,mx/h);w*=rt;h*=rt}c.width=w;c.height=h;c.getContext('2d').drawImage(i,0,0,w,h);let q=.7,res=c.toDataURL('image/jpeg',q);while(res.length>mk*1024*1.37&&q>.1){q-=.05;res=c.toDataURL('image/jpeg',q)}r(res)};i.src=e.target.result};fr.readAsDataURL(f)})}
+async function sms(ph,msg){let f=ph.replace(/[\s+]/g,'');if(f.startsWith('0'))f='94'+f.substring(1);else if(!f.startsWith('94'))f='94'+f;try{await fetch('https://app.text.lk/api/v3/sms/send',{method:'POST',headers:{'Authorization':`Bearer ${SMS_B}`,'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({recipient:f,sender_id:SMS_S,type:'plain',message:msg})})}catch(e){}return true}
+
+// LOC
+let lIv=null;
+function cLoc(){if(navigator.geolocation){navigator.geolocation.getCurrentPosition(()=>{locOk=true;H('locD');if(lIv){clearInterval(lIv);lIv=null}},()=>{locOk=false;S('locD')},{timeout:5e3})}else locOk=true}
+$('gLoc').onclick=()=>{navigator.geolocation?.getCurrentPosition(()=>{locOk=true;H('locD');if(lIv){clearInterval(lIv);lIv=null}},()=>snk('අවසර ලබා දිය නොහැක'),{timeout:1e4})};
+$('cLoc').onclick=()=>{H('locD');setTimeout(()=>{if(!locOk)S('locD')},2e3)};
+
+// INIT
+async function init(){
+    const raw=localStorage.getItem('ema_user'),sid=localStorage.getItem('ema_id');
+    if(!raw||!sid){location.href='index.html';return}
+    eid=sid;U=JSON.parse(raw);
+    let ok=false;
+    for(let a=0;a<2;a++){try{const s=await get(child(ref(db),'users/'+fk(eid)));if(s.exists()){U=s.val();localStorage.setItem('ema_user',JSON.stringify(U));ok=true;break}}catch(e){}if(!a)await new Promise(r=>setTimeout(r,5e3))}
+    if(!ok){localStorage.removeItem('ema_user');localStorage.removeItem('ema_id');location.href='index.html';return}
+    if(U.agent===true&&U.agentId){localStorage.setItem('agent','true');localStorage.setItem('agentid',U.agentId)}
+    await loadStats();
+    render();$('pl').classList.remove('show');cLoc();lIv=setInterval(()=>{if(!locOk)cLoc()},1e4);
+}
+
+let allReports=[];
+async function loadStats(){
+    let sightings=0,accidents=0,locations=new Set(),myReports=0;
+    allReports=[];
+    try{
+        const snap=await get(child(ref(db),'reports'));
+        if(snap.exists()){
+            const reps=snap.val();
+            for(const k in reps){
+                const r=reps[k];allReports.push(r);
+                if(r.type==='sighting')sightings++;
+                else if(r.type==='accident')accidents++;
+                if(r.districtKey)locations.add(r.districtKey);
+                if(r.reporterEmaId===eid)myReports++;
+            }
+            allReports.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
+        }
+    }catch(e){console.warn(e)}
+    $('stSight').textContent=sightings;
+    $('stLoc').textContent=locations.size;
+    $('stAcc').textContent=accidents;
+    $('stTotal').textContent=sightings+accidents;
+    renderRecentReports();
+}
+
+function renderRecentReports(){
+    const list=$('repList');list.innerHTML='';
+    const recent=allReports.slice(0,10);
+    if(!recent.length){list.innerHTML='<div class="no-rep">වාර්තා නොමැත</div>';return}
+    recent.forEach(r=>{
+        const card=document.createElement('div');card.className='rep-card';
+        const isSight=r.type==='sighting';
+        let title='',sub='';
+        if(isSight){
+            title=`අලි ${r.count||1}ක් නිරීක්ෂණය - ${r.district||''}`;
+            sub=r.elType==='tusker'?'දළ ඇතා':'අලියා';
+            if(r.description)sub+=` | ${r.description}`;
+        }else{
+            const parts=[];
+            if(r.injury>0)parts.push(`තුවාල ${r.injury}`);
+            if(r.death>0)parts.push(`මරණ ${r.death}`);
+            title=`අලි අනතුරක් - ${r.district||''}`;
+            sub=parts.join(', ');
+            if(r.emergency)sub+=' | හදිසි සහාය';
+            if(r.description)sub+=` | ${r.description}`;
+        }
+        let agentHTML='';
+        if(r.agentReport)agentHTML=`<div class="rep-agent"><span class="material-icons-round">verified</span>නියෝජිත වාර්තාව</div>`;
+        const ts=r.timestamp?new Date(r.timestamp).toLocaleString('si-LK',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+        card.innerHTML=`<div class="rep-dot ${isSight?'bl':'rd'}"></div><div class="rep-body"><div class="rep-title">${title}</div><div class="rep-sub">${sub}</div><div class="rep-time">${ts} | ${r.reporterName||''}</div>${agentHTML}</div>`;
+        list.appendChild(card);
+    });
+}
+
+function render(){
+    $('tNm').textContent=U.fullName||'---';$('tId').textContent=eid;
+    if(U.profilePic)$('tAv').innerHTML=`<img src="${U.profilePic}" class="av" alt="" id="tAvI">`;
+    bindAv();
+}
+function bindAv(){$('tAv').style.cursor='pointer';$('tAv').onclick=()=>openPrf()}
+
+// PROFILE
+function openPrf(){
+    if(U.profilePic)$('pcAv').innerHTML=`<img src="${U.profilePic}" class="pc-av" alt="">`;else $('pcAv').innerHTML='<div class="pc-av-ph"><span class="material-icons-round">person</span></div>';
+    $('pcNm').textContent=U.fullName||'---';$('pcId').textContent=eid;
+    $('pcPh').textContent=U.phone?'+94 '+U.phone:'---';$('pcEm').textContent=U.email||'---';
+    $('pcDt').textContent=U.registeredAt?new Date(U.registeredAt).toLocaleDateString('si-LK',{year:'numeric',month:'long',day:'numeric'}):'---';
+    if(U.agent===true){$('pcAR').classList.remove('hidden');$('pcAg').textContent='නියෝජිතයෙකි ('+(U.agentId||'')+')';}else $('pcAR').classList.add('hidden');
+    S('prfD');
+}
+$('cPrf').onclick=()=>H('prfD');
+
+// DD
+$('mB').onclick=e=>{e.stopPropagation();$('ddO').classList.toggle('show')};
+$('ddO').onclick=()=>$('ddO').classList.remove('show');
+function cDD(){$('ddO').classList.remove('show')}
+$('mAch').onclick=()=>{cDD();location.href='ach.html'};
+$('mCo').onclick=()=>{cDD();location.href='co.html'};
+
+// EDIT
+$('mEP').onclick=()=>{cDD();const ed=U.profileEdits||0,rem=3-ed;if(rem<=0){snk('සංස්කරණ සීමාව අවසන්');return}$('edCt').textContent=`${rem}/3`;$('edNm').value=U.fullName||'';$('edPh').value=U.phone||'';$('edEm').value=U.email||'';ePB=null;if(U.profilePic){$('edAvW').innerHTML=`<img src="${U.profilePic}" class="eav" alt="">`;$('edAvW').className=''}else{$('edAvW').innerHTML='<span class="material-icons-round">person</span>';$('edAvW').className='eavp'}S('edD')};
+$('cEd').onclick=()=>H('edD');$('xEd').onclick=()=>H('edD');
+$('edPB').onclick=()=>$('edPI').click();$('edAvW').onclick=()=>$('edPI').click();
+$('edPI').onchange=async e=>{const f=e.target.files[0];if(!f)return;ePB=await cImg(f,50);$('edAvW').innerHTML=`<img src="${ePB}" class="eav" alt="">`;$('edAvW').className=''};
+$('svEd').onclick=async()=>{const nm=$('edNm').value.trim(),ph=$('edPh').value.trim(),em=$('edEm').value.trim();if(!nm){snk('නම');return}if(!ph||ph.length<9){snk('අංකය');return}const ed=(U.profileEdits||0)+1,up={fullName:nm,phone:ph,email:em,profileEdits:ed};if(ePB)up.profilePic=ePB;try{await update(ref(db,'users/'+fk(eid)),up);Object.assign(U,up);localStorage.setItem('ema_user',JSON.stringify(U));render();H('edD');snk('යාවත්කාලීන විය')}catch(e){snk('අසාර්ථකයි')}};
+
+// SIGN OUT
+$('mSO').onclick=()=>{cDD();S('soD')};$('soC').onclick=()=>H('soD');
+$('soO').onclick=()=>{H('soD');S('tmD');let s=5;$('tmT').textContent=s;const c=$('tmP'),ci=2*Math.PI*28;c.style.strokeDasharray=ci;c.style.strokeDashoffset='0';soTm=setInterval(()=>{s--;$('tmT').textContent=s;c.style.strokeDashoffset=ci*(1-s/5);if(s<=0){clearInterval(soTm);soTm=null;doSO()}},1e3)};
+$('tmC').onclick=()=>{if(soTm){clearInterval(soTm);soTm=null}H('tmD')};
+function doSO(){localStorage.clear();location.href='index.html'}
+$('soX').onclick=()=>{H('soD');S('hdD');$('hFl').style.width='0%';$('hBtn').classList.remove('filling')};$('hC').onclick=()=>{cH();H('hdD')};
+let hA=false;function sH(){hA=true;hSt=Date.now();$('hBtn').classList.add('filling');hIv=setInterval(()=>{const p=Math.min((Date.now()-hSt)/5e3*100,100);$('hFl').style.width=p+'%';if(p>=100){cH();doDel()}},50)}
+function cH(){hA=false;if(hIv){clearInterval(hIv);hIv=null}$('hFl').style.width='0%';$('hBtn').classList.remove('filling')}
+const hb=$('hBtn');hb.onmousedown=sH;hb.ontouchstart=e=>{e.preventDefault();sH()};hb.onmouseup=cH;hb.onmouseleave=cH;hb.ontouchend=cH;hb.ontouchcancel=cH;
+async function doDel(){H('hdD');$('pl').classList.add('show');try{await remove(ref(db,'users/'+fk(eid)))}catch(e){}doSO()}
+
+// AGENT
+$('mAS').onclick=async()=>{cDD();const sa=$('agSA');sa.innerHTML='';$('rgAg').classList.remove('hidden');try{const snap=await get(child(ref(db),'users/'+fk(eid)+'/agent_info'));if(snap.exists()){const info=snap.val();if(info.agentStatus==='true'||info.agentStatus===true){sa.innerHTML=`<div class="eid"><div class="el">නියෝජිත අංකය</div><div class="ev">${info.agentId||'---'}</div></div><div style="text-align:center"><span class="bdg app"><span class="material-icons-round">verified</span>ඔබ නියෝජිතයෙකි!</span></div>`;$('rgAg').classList.add('hidden');U.agent=true;U.agentId=info.agentId;localStorage.setItem('agent','true');localStorage.setItem('agentid',info.agentId)}else if(info.agentStatus==='cancel'){let rH='';if(info.rejres){const rs=typeof info.rejres==='string'?info.rejres.split(','):Object.values(info.rejres);rH=`<div class="rc"><h4><span class="material-icons-round">error</span>හේතු</h4><ul>${rs.map(r=>`<li><span class="material-icons-round">remove_circle</span>${r.trim()}</li>`).join('')}</ul></div>`}sa.innerHTML=`<div style="text-align:center;margin:8px 0"><span class="bdg rej"><span class="material-icons-round">cancel</span>ප්‍රතික්ෂේප විය</span></div>${rH}<div style="display:flex;gap:6px;margin-top:8px"><button class="btn btn-f" id="reA" style="flex:1"><span class="material-icons-round">refresh</span>නැවත</button><button class="btn btn-o" id="dlA" style="flex:1"><span class="material-icons-round">delete</span>මකන්න</button></div>`;$('rgAg').classList.add('hidden');$('reA').onclick=()=>{H('agD');openAR()};$('dlA').onclick=async()=>{try{await remove(ref(db,'users/'+fk(eid)+'/agent_info'));sa.innerHTML='';$('rgAg').classList.remove('hidden');snk('මකා දැමිණි')}catch(e){snk('අසාර්ථකයි')}}}else if(info.agentStatus==='pending'){sa.innerHTML=`<div class="eid"><div class="el">නියෝජිත අංකය</div><div class="ev">${info.agentId||'---'}</div></div><div style="text-align:center"><span class="bdg pnd"><span class="material-icons-round">hourglass_top</span>බලාපොරොත්තුවෙන්</span></div>`;$('rgAg').classList.add('hidden')}}}catch(e){}S('agD')};
+$('cAg').onclick=()=>H('agD');$('rgAg').onclick=()=>{H('agD');openAR()};
+function openAR(){sAR('r1');$('rNic').value='';nFB=nBB=null;$('nFA').innerHTML='<span class="material-icons-round">add_photo_alternate</span><p>ඡායාරූපය</p>';$('nBA').innerHTML='<span class="material-icons-round">add_photo_alternate</span><p>ඡායාරූපය</p>';$('rMN').value='';$('rMP').value='';$('rME').value='';S('arD')}
+function sAR(id){document.querySelectorAll('#arD .cs').forEach(s=>s.classList.remove('active'));$(id).classList.add('active')}
+$('cAR').onclick=()=>H('arD');
+$('nFA').onclick=()=>$('nFI').click();$('nFI').onchange=async e=>{const f=e.target.files[0];if(!f)return;nFB=await cImg(f,80);$('nFA').innerHTML=`<img src="${nFB}" alt="">`};
+$('nBA').onclick=()=>$('nBI').click();$('nBI').onchange=async e=>{const f=e.target.files[0];if(!f)return;nBB=await cImg(f,80);$('nBA').innerHTML=`<img src="${nBB}" alt="">`};
+$('rN1').onclick=()=>{if(!$('rNic').value.trim()||$('rNic').value.trim().length<9){snk('ජා.හැ.අ.');return}if(!nFB){snk('ඉදිරිපස');return}if(!nBB){snk('පසුපස');return}sAR('r2')};
+$('rB1').onclick=()=>sAR('r1');$('rB2').onclick=()=>sAR('r2');
+$('rUE').onclick=async()=>{sAR('rL');const aid=gAI();try{await set(ref(db,'users/'+fk(eid)+'/agent_info'),{agentId:aid,nic:$('rNic').value.trim(),nicFront:nFB,nicBack:nBB,fullName:U.fullName||'',phone:U.phone||'',email:U.email||'',dataSource:'existing',agentStatus:'pending',appliedAt:new Date().toISOString()});$('rAID').textContent=aid;sAR('rDn')}catch(e){snk('අසාර්ථකයි');sAR('r2')}};
+$('rMn').onclick=()=>sAR('r3');
+$('rMS').onclick=async()=>{const nm=$('rMN').value.trim(),ph=$('rMP').value.trim(),em=$('rME').value.trim();if(!nm){snk('නම');return}if(!ph||ph.length<9){snk('අංකය');return}sAR('rL');const aid=gAI();try{await set(ref(db,'users/'+fk(eid)+'/agent_info'),{agentId:aid,nic:$('rNic').value.trim(),nicFront:nFB,nicBack:nBB,fullName:nm,phone:ph,email:em||'',dataSource:'manual',agentStatus:'pending',appliedAt:new Date().toISOString()});$('rAID').textContent=aid;sAR('rDn')}catch(e){snk('අසාර්ථකයි');sAR('r3')}};
+$('rOk').onclick=()=>H('arD');
+
+// EAZ
+function sE(id){document.querySelectorAll('#eD .cs').forEach(s=>s.classList.remove('active'));$(id).classList.add('active')}
+$('eazB').onclick=()=>{sE('e1');rEP();S('eD')};$('cEaz').onclick=()=>H('eD');
+function rEP(){const l=$('ePL');l.innerHTML='';const ph=U.eazPhones||[];if(!ph.length){l.innerHTML='<p style="font-size:11px;color:var(--osv);text-align:center;padding:8px">අංක නොමැත</p>';$('eAP').classList.remove('hidden');return}ph.forEach((p,i)=>{const d=document.createElement('div');d.className='phi';const dn=(p.districtNames||[]).join(', ');d.innerHTML=`<span class="phn">${p.number}</span><span class="phd">${dn}</span><button class="phdb" data-i="${i}"><span class="material-icons-round">delete_outline</span></button>`;d.querySelector('.phdb').onclick=()=>{dpI=i;$('dpN').textContent=p.number;S('dpD')};l.appendChild(d)});if(ph.length>=10)$('eAP').classList.add('hidden');else $('eAP').classList.remove('hidden')}
+$('dpC').onclick=()=>{dpI=-1;H('dpD')};
+$('dpY').onclick=async()=>{if(dpI<0)return;H('dpD');const ph=U.eazPhones||[];const rm=ph[dpI];ph.splice(dpI,1);U.eazPhones=ph;try{await update(ref(db,'users/'+fk(eid)),{eazPhones:ph});if(rm.districts){for(const dk of rm.districts){try{await remove(ref(db,dk+'/'+rm.number.replace(/\+/g,'')))}catch(e){}}}localStorage.setItem('ema_user',JSON.stringify(U));const dl=(rm.districtNames||[]).join(', ');await sms(rm.number,`EazElephant: ඔබගේ අංකය ${rm.number} EazElephant සේවාවෙන් ඉවත් කර ඇත. ${dl} ප්‍රදේශවල දැනුම්දීම් තවදුරටත් නොලැබේ. | Your number has been unregistered from EazElephant.`);rEP();snk('ඉවත් කර දැනුම්දීමක් යවන ලදී')}catch(e){snk('අසාර්ථකයි')}dpI=-1};
+$('eAP').onclick=()=>{if((U.eazPhones||[]).length>=10){snk('උපරිම 10');return}$('ePh').value='';sE('e2')};
+$('ePBk').onclick=()=>{sE('e1');rEP()};
+$('eSO').onclick=async()=>{const ph=$('ePh').value.trim();if(!vSL(ph)){snk('වලංගු අංකයක්');return}ePhn=f94(ph);eOtp=g6();await sms(ph,`EazElephant: ඔබගේ සත්‍යාපන කේතය ${eOtp} වේ.`);sE('e3');bOtp();document.querySelector('.oti[data-i="0"]')?.focus()};
+function bOtp(){const r=$('oR');r.innerHTML='';for(let i=0;i<6;i++){const inp=document.createElement('input');inp.className='oti';inp.maxLength=1;inp.dataset.i=i;inp.inputMode='numeric';inp.addEventListener('input',e=>{if(e.target.value.length===1&&i<5)r.querySelector(`[data-i="${i+1}"]`).focus()});inp.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!e.target.value&&i>0)r.querySelector(`[data-i="${i-1}"]`).focus()});r.appendChild(inp)}}
+$('eVO').onclick=()=>{const ent=Array.from($('oR').querySelectorAll('.oti')).map(b=>b.value).join('');if(ent.length!==6){snk('කේතය');return}if(ent===eOtp){snk('තහවුරු විය');rDist();sE('e4')}else{snk('වැරදියි');$('oR').querySelectorAll('.oti').forEach(b=>b.value='');$('oR').querySelector('[data-i="0"]').focus()}};
+function rDist(){const g=$('dG');g.innerHTML='';selD=[];DI.forEach((d,i)=>{const c=document.createElement('div');c.className='dc';c.innerHTML=`<span class="material-icons-round">check_circle</span>${d}`;c.onclick=()=>{if(c.classList.contains('sel')){c.classList.remove('sel');selD=selD.filter(x=>x!==i)}else{if(selD.length>=5){snk('උපරිම 5');return}c.classList.add('sel');selD.push(i)}};g.appendChild(c)})}
+$('eRg').onclick=async()=>{if(!selD.length){snk('දිස්ත්‍රික්කයක්');return}const pk=ePhn.replace(/\+/g,''),dks=selD.map(i=>DK[i]),dns=selD.map(i=>DI[i]);try{for(const dk of dks)await set(ref(db,dk+'/'+pk),{phone:ePhn,emaId:eid,registeredAt:new Date().toISOString()});const ph=U.eazPhones||[];ph.push({number:ePhn,districts:dks,districtNames:dns,addedAt:new Date().toISOString()});U.eazPhones=ph;await update(ref(db,'users/'+fk(eid)),{eazPhones:ph});localStorage.setItem('ema_user',JSON.stringify(U));const dl=dns.join(', ');await sms(ePhn,`EazElephant: ඔබ සාර්ථකව සම්බන්ධ විය! ${dl} ප්‍රදේශවල අලි යාවත්කාලීන ලැබේ. | Connected with EMA! Updates on ${dl}.`);sE('e5')}catch(e){snk('අසාර්ථකයි')}};
+$('eOk').onclick=()=>H('eD');
+
+init();
+</script>
+</body>
+</html>

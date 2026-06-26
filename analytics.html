@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EMA - Analytics</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        :root{
+            --p:#1B5E20;--op:#FFF;--pc:#A5D6A7;--opc:#0A3A0A;
+            --sf:#F8FAF6;--scl:#FFF;--sc2:#ECF0EA;--sc3:#E7EAE4;--sc4:#E1E4DE;
+            --os:#191D19;--osv:#414942;--ol:#727970;--olv:#C1C9BF;
+            --er:#BA1A1A;--erc:#FFDAD6;
+            --r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:28px;--r-full:9999px;
+            --e1:0 1px 3px 1px rgba(0,0,0,.08),0 1px 2px 0 rgba(0,0,0,.12);
+            --e2:0 2px 6px 2px rgba(0,0,0,.08),0 1px 2px 0 rgba(0,0,0,.12);
+        }
+        html,body{height:100%;overflow:hidden;font-family:'Roboto','Noto Sans Sinhala',sans-serif;background:var(--sf);color:var(--os)}
+        .hidden{display:none!important}
+        .app{display:flex;flex-direction:column;height:100dvh;height:100vh;overflow:hidden}
+        .fload{display:none;position:fixed;inset:0;background:var(--sf);z-index:9999;justify-content:center;align-items:center;flex-direction:column;gap:12px}
+        .fload.show{display:flex}
+        .sp{width:32px;height:32px;border:3px solid var(--sc4);border-top-color:var(--p);border-radius:50%;animation:sp .8s linear infinite}
+        .sp.lg{width:40px;height:40px;border-width:4px}
+        @keyframes sp{to{transform:rotate(360deg)}}
+        .topbar{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--scl);border-bottom:1px solid var(--olv);flex-shrink:0;z-index:100}
+        .topbar h1{font-size:15px;font-weight:700;color:var(--p);flex:1}
+        .ib{width:36px;height:36px;border:none;background:transparent;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--osv);transition:background .12s;flex-shrink:0}
+        .ib:hover{background:var(--sc3)}
+        .scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:10px 12px 28px}
+        .ct{max-width:600px;margin:0 auto}
+        .ov-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px}
+        .ov{background:var(--scl);border:1px solid var(--olv);border-radius:var(--r-md);padding:12px 8px;text-align:center}
+        .ov-icon{width:32px;height:32px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;margin:0 auto 6px}
+        .ov-icon .material-icons-round{font-size:18px}
+        .ov-val{font-size:22px;font-weight:700;font-family:'Roboto',monospace;color:var(--os)}
+        .ov-lbl{font-size:9px;color:var(--osv);margin-top:2px}
+        .sec{margin-bottom:14px}
+        .sec-hdr{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+        .sec-hdr .material-icons-round{font-size:18px;color:var(--p)}
+        .sec-hdr h2{font-size:13px;font-weight:600;color:var(--os)}
+        .card{background:var(--scl);border:1px solid var(--olv);border-radius:var(--r-md);padding:14px;margin-bottom:6px}
+        .bar-chart{display:flex;align-items:flex-end;gap:4px;height:130px;padding:6px 0}
+        .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px}
+        .bar{width:100%;border-radius:3px 3px 0 0;min-height:2px;transition:height .4s ease}
+        .bar-lbl{font-size:7px;color:var(--ol);text-align:center;max-width:100%;overflow:hidden}
+        .bar-val{font-size:7px;font-weight:600;color:var(--os);font-family:'Roboto',monospace}
+        .hbar-chart{display:flex;flex-direction:column;gap:5px}
+        .hbar-row{display:flex;align-items:center;gap:6px}
+        .hbar-label{font-size:9px;color:var(--osv);width:65px;text-align:right;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+        .hbar-track{flex:1;height:16px;background:var(--sc2);border-radius:8px;overflow:hidden}
+        .hbar-fill{height:100%;border-radius:8px;transition:width .5s ease;min-width:2px}
+        .hbar-val{font-size:8px;font-weight:600;color:var(--os);font-family:'Roboto',monospace;width:24px;flex-shrink:0}
+        .timeline{position:relative;padding-left:18px}
+        .timeline::before{content:'';position:absolute;left:5px;top:0;bottom:0;width:2px;background:var(--olv)}
+        .tl-item{position:relative;margin-bottom:10px;padding-left:14px}
+        .tl-dot{position:absolute;left:-16px;top:3px;width:10px;height:10px;border-radius:50%;border:2px solid var(--scl)}
+        .tl-dot.bl{background:#1565C0}.tl-dot.rd{background:#C62828}
+        .tl-date{font-size:8px;color:var(--ol);font-family:'Roboto';margin-bottom:1px}
+        .tl-text{font-size:10px;color:var(--os);line-height:1.4}
+        .tl-badge{display:inline-flex;align-items:center;gap:2px;padding:1px 5px;border-radius:var(--r-full);font-size:7px;font-weight:600}
+        .tl-badge.sight{background:#E3F2FD;color:#0D47A1}
+        .tl-badge.acc{background:#FFEBEE;color:#B71C1C}
+        .map-wrap{width:100%;height:240px;border-radius:var(--r-md);overflow:hidden;border:1px solid var(--olv)}
+        #coverageMap{width:100%;height:100%}
+        .leaflet-control-zoom,.leaflet-control-attribution{display:none!important}
+        .dist-table{width:100%;border-collapse:collapse}
+        .dist-table th{font-size:8px;color:var(--ol);text-transform:uppercase;letter-spacing:.3px;text-align:left;padding:5px 6px;border-bottom:2px solid var(--olv);font-weight:600}
+        .dist-table td{font-size:10px;padding:5px 6px;border-bottom:1px solid var(--sc2);color:var(--os)}
+        .dist-table td:nth-child(n+2){font-family:'Roboto',monospace;text-align:center;font-weight:500}
+        .dist-table tr:hover td{background:var(--sc2)}
+        .dist-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:3px}
+        .donut-wrap{display:flex;align-items:center;gap:14px;justify-content:center}
+        .donut-svg{width:110px;height:110px}
+        .donut-legend{display:flex;flex-direction:column;gap:5px}
+        .donut-leg-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--osv)}
+        .donut-leg-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+        .donut-leg-item strong{color:var(--os);font-family:'Roboto',monospace}
+        .ft{text-align:center;padding:10px 0;font-size:10px;color:var(--ol)}
+        .ft strong{color:var(--osv)}
+        .snk{position:fixed;bottom:14px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--os);color:var(--sf);padding:10px 16px;border-radius:var(--r-sm);font-size:11px;z-index:3000;transition:transform .3s;max-width:88%;font-family:inherit}
+        .snk.show{transform:translateX(-50%) translateY(0)}
+    </style>
+</head>
+<body>
+<div class="app">
+    <div class="fload show" id="pl"><div class="sp lg"></div><p style="font-size:12px;color:var(--osv)">Loading analytics...</p></div>
+
+    <div class="topbar">
+        <button class="ib" onclick="location.href='main.html'"><span class="material-icons-round">arrow_back</span></button>
+        <h1>Analytics</h1>
+        <button class="ib" id="dlPdf" title="Download PDF"><span class="material-icons-round">download</span></button>
+        <button class="ib" onclick="location.href='main.html'"><span class="material-icons-round">home</span></button>
+    </div>
+
+    <div class="scroll">
+        <div class="ct">
+            <div class="ov-grid">
+                <div class="ov"><div class="ov-icon" style="background:var(--pc)"><span class="material-icons-round" style="color:var(--opc)">groups</span></div><div class="ov-val" id="ovUsers">0</div><div class="ov-lbl">Total Users</div></div>
+                <div class="ov"><div class="ov-icon" style="background:#E3F2FD"><span class="material-icons-round" style="color:#0D47A1">shield</span></div><div class="ov-val" id="ovAgents">0</div><div class="ov-lbl">EMA Agents</div></div>
+                <div class="ov"><div class="ov-icon" style="background:#FFF8E1"><span class="material-icons-round" style="color:#F57F17">assessment</span></div><div class="ov-val" id="ovReports">0</div><div class="ov-lbl">Total Reports</div></div>
+            </div>
+            <div class="ov-grid">
+                <div class="ov"><div class="ov-icon" style="background:#E8F5E9"><span class="material-icons-round" style="color:var(--p)">visibility</span></div><div class="ov-val" id="ovSight">0</div><div class="ov-lbl">Sightings</div></div>
+                <div class="ov"><div class="ov-icon" style="background:#FFEBEE"><span class="material-icons-round" style="color:#C62828">report</span></div><div class="ov-val" id="ovAcc">0</div><div class="ov-lbl">Accidents</div></div>
+                <div class="ov"><div class="ov-icon" style="background:#F3E5F5"><span class="material-icons-round" style="color:#7B1FA2">pets</span></div><div class="ov-val" id="ovElephants">0</div><div class="ov-lbl">Elephants Spotted</div></div>
+            </div>
+            <div class="ov-grid">
+                <div class="ov"><div class="ov-icon" style="background:#FFEBEE"><span class="material-icons-round" style="color:#B71C1C">dangerous</span></div><div class="ov-val" id="ovDeaths">0</div><div class="ov-lbl">Deaths</div></div>
+                <div class="ov"><div class="ov-icon" style="background:#FFF3E0"><span class="material-icons-round" style="color:#E65100">healing</span></div><div class="ov-val" id="ovInjury">0</div><div class="ov-lbl">Injuries</div></div>
+                <div class="ov"><div class="ov-icon" style="background:#E0F2F1"><span class="material-icons-round" style="color:#00695C">map</span></div><div class="ov-val" id="ovDist">0</div><div class="ov-lbl">Districts Covered</div></div>
+            </div>
+
+            <div class="sec">
+                <div class="sec-hdr"><span class="material-icons-round">donut_large</span><h2>Report Distribution</h2></div>
+                <div class="card"><div class="donut-wrap" id="donutArea"></div></div>
+            </div>
+
+            <div class="sec">
+                <div class="sec-hdr"><span class="material-icons-round">bar_chart</span><h2>Monthly Elephant Deaths</h2></div>
+                <div class="card"><div class="bar-chart" id="deathChart"></div></div>
+            </div>
+
+            <div class="sec">
+                <div class="sec-hdr"><span class="material-icons-round">show_chart</span><h2>Monthly Sightings</h2></div>
+                <div class="card"><div class="bar-chart" id="sightChart"></div></div>
+            </div>
+
+            <div class="sec">
+                <div class="sec-hdr"><span class="material-icons-round">location_on</span><h2>Reports by District</h2></div>
+                <div class="card"><div class="hbar-chart" id="distChart"></div></div>
+            </div>
+
+            <div class="sec">
+                <div class="sec-hdr"><span class="material-icons-round">pets</span><h2>Elephant Type Distribution</h2></div>
+                <div class="card"><div class="donut-wrap" id="typeDonut"></div></div>
+            </div>
+
+            <div class="sec">
+                <div class="sec-hdr"><span class="material-icons-round">timeline</span><h2>Recent Timeline</h2></div>
+                <div class="card"><div class="timeline" id="timeline"></div></div>
+            </div>
+
+            <div class="sec">
+                <div class="sec-hdr"><span class="material-icons-round">map</span><h2>District Coverage Map</h2></div>
+                <div class="card" style="padding:8px"><div class="map-wrap"><div id="coverageMap"></div></div></div>
+            </div>
+
+            <div class="sec">
+                <div class="sec-hdr"><span class="material-icons-round">table_chart</span><h2>District Summary</h2></div>
+                <div class="card" style="padding:0;overflow-x:auto"><table class="dist-table"><thead><tr><th>District</th><th>Sightings</th><th>Accidents</th><th>Deaths</th><th>Injuries</th><th>Total</th></tr></thead><tbody id="distTbody"></tbody></table></div>
+            </div>
+
+            <div class="sec">
+                <div class="sec-hdr"><span class="material-icons-round">leaderboard</span><h2>Top Reporters</h2></div>
+                <div class="card"><div class="hbar-chart" id="reporterChart"></div></div>
+            </div>
+
+            <div class="ft">Made by <strong>Aveesha Ninsara</strong></div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import{getDatabase,ref,get,child}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js";
+
+const fb=initializeApp({apiKey:"AIzaSyBxhaRpjccuhoKE3T8WYRihy1rDXtRhGO4",authDomain:"ema-4-b10bd.firebaseapp.com",databaseURL:"https://ema-4-b10bd-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"ema-4-b10bd",storageBucket:"ema-4-b10bd.firebasestorage.app",messagingSenderId:"149141817573",appId:"1:149141817573:web:409bfb4d9c2b84cf742c0c"});
+const db=getDatabase(fb);
+
+const DIST_EN=["Colombo","Gampaha","Kalutara","Kandy","Matale","Nuwara Eliya","Galle","Matara","Hambantota","Jaffna","Kilinochchi","Mannar","Vavuniya","Mullaitivu","Batticaloa","Ampara","Trincomalee","Kurunegala","Puttalam","Anuradhapura","Polonnaruwa","Badulla","Monaragala","Ratnapura","Kegalle"];
+const DIST_KEY=["colombo","gampaha","kalutara","kandy","matale","nuwaraeliya","galle","matara","hambantota","jaffna","kilinochchi","mannar","vavuniya","mullaitivu","batticaloa","ampara","trincomalee","kurunegala","puttalam","anuradhapura","polonnaruwa","badulla","monaragala","ratnapura","kegalle"];
+const DIST_COORDS=[[6.93,79.85],[7.08,80.0],[6.58,80.14],[7.29,80.63],[7.47,80.62],[6.97,80.77],[6.05,80.22],[5.95,80.53],[6.12,81.12],[9.66,80.01],[9.38,80.4],[8.98,79.9],[8.75,80.5],[9.27,80.59],[7.73,81.7],[7.3,81.67],[8.57,81.23],[7.49,80.36],[8.03,79.84],[8.35,80.38],[7.94,81.0],[6.99,81.05],[6.65,81.35],[6.68,80.4],[7.25,80.35]];
+const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+let reports=[],users=[],stats={};
+const $=i=>document.getElementById(i);
+function snk(m){let s=document.querySelector('.snk');if(!s){s=document.createElement('div');s.className='snk';document.body.appendChild(s)}s.textContent=m;s.classList.add('show');setTimeout(()=>s.classList.remove('show'),3e3)}
+
+async function init(){
+    try{
+        const[rS,uS]=await Promise.all([get(child(ref(db),'reports')),get(child(ref(db),'users'))]);
+        if(rS.exists()){const d=rS.val();for(const k in d){d[k]._id=k;reports.push(d[k])}}
+        if(uS.exists()){const d=uS.val();for(const k in d)users.push(d[k])}
+    }catch(e){console.warn(e)}
+    reports.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
+    compute();renderAll();$('pl').classList.remove('show');
+}
+
+function compute(){
+    const s={totalUsers:users.length,totalAgents:0,totalReports:reports.length,sightings:0,accidents:0,totalElephants:0,totalDeaths:0,totalInjuries:0,districts:new Set(),monthlyDeaths:{},monthlySightings:{},districtData:{},elephantTypes:{elephant:0,tusker:0},reporters:{}};
+    users.forEach(u=>{if(u.agent_info&&(u.agent_info.agentStatus==='true'||u.agent_info.agentStatus===true))s.totalAgents++});
+    reports.forEach(r=>{
+        if(r.type==='sighting'){s.sightings++;s.totalElephants+=(r.count||1);if(r.elType==='tusker')s.elephantTypes.tusker+=(r.count||1);else s.elephantTypes.elephant+=(r.count||1)}
+        else if(r.type==='accident'){s.accidents++;s.totalDeaths+=(r.death||0);s.totalInjuries+=(r.injury||0)}
+        if(r.districtKey)s.districts.add(r.districtKey);
+        const dk=r.districtKey||'unknown';
+        if(!s.districtData[dk])s.districtData[dk]={sightings:0,accidents:0,deaths:0,injuries:0,total:0};
+        s.districtData[dk].total++;
+        if(r.type==='sighting')s.districtData[dk].sightings++;
+        else{s.districtData[dk].accidents++;s.districtData[dk].deaths+=(r.death||0);s.districtData[dk].injuries+=(r.injury||0)}
+        if(r.timestamp){const dt=new Date(r.timestamp);const mk=dt.getFullYear()+'-'+(dt.getMonth()+1);
+            if(r.type==='accident')s.monthlyDeaths[mk]=(s.monthlyDeaths[mk]||0)+(r.death||0);
+            if(r.type==='sighting')s.monthlySightings[mk]=(s.monthlySightings[mk]||0)+1}
+        const rn=r.reporterName||'Unknown';s.reporters[rn]=(s.reporters[rn]||0)+1;
+    });
+    stats=s;
+}
+
+function renderAll(){
+    $('ovUsers').textContent=stats.totalUsers;$('ovAgents').textContent=stats.totalAgents;
+    $('ovReports').textContent=stats.totalReports;$('ovSight').textContent=stats.sightings;
+    $('ovAcc').textContent=stats.accidents;$('ovElephants').textContent=stats.totalElephants;
+    $('ovDeaths').textContent=stats.totalDeaths;$('ovInjury').textContent=stats.totalInjuries;
+    $('ovDist').textContent=stats.districts.size;
+    renderDonut('donutArea',[{label:'Sightings',value:stats.sightings,color:'#1565C0'},{label:'Accidents',value:stats.accidents,color:'#C62828'}]);
+    renderMonthlyBars('deathChart',stats.monthlyDeaths,'#C62828');
+    renderMonthlyBars('sightChart',stats.monthlySightings,'#1565C0');
+    renderDistBars();
+    renderDonut('typeDonut',[{label:'Elephant',value:stats.elephantTypes.elephant,color:'#2E7D32'},{label:'Tusker',value:stats.elephantTypes.tusker,color:'#F57F17'}]);
+    renderTimeline();renderMap();renderDistTable();renderReporterBars();
+}
+
+function renderDonut(cid,data){
+    const total=data.reduce((a,b)=>a+b.value,0);
+    if(!total){$(cid).innerHTML='<p style="font-size:11px;color:var(--osv)">No data</p>';return}
+    let cum=0;const R=45,r=30,cx=55,cy=55;let paths='';
+    data.forEach(d=>{
+        const pct=d.value/total;const s=cum*2*Math.PI-Math.PI/2;cum+=pct;const e=cum*2*Math.PI-Math.PI/2;
+        const la=pct>.5?1:0;
+        paths+=`<path d="M${cx+R*Math.cos(s)},${cy+R*Math.sin(s)} A${R},${R} 0 ${la},1 ${cx+R*Math.cos(e)},${cy+R*Math.sin(e)} L${cx+r*Math.cos(e)},${cy+r*Math.sin(e)} A${r},${r} 0 ${la},0 ${cx+r*Math.cos(s)},${cy+r*Math.sin(s)} Z" fill="${d.color}"/>`;
+    });
+    const legend=data.map(d=>`<div class="donut-leg-item"><div class="donut-leg-dot" style="background:${d.color}"></div>${d.label} <strong>${d.value}</strong> (${Math.round(d.value/total*100)}%)</div>`).join('');
+    $(cid).innerHTML=`<svg class="donut-svg" viewBox="0 0 110 110">${paths}<text x="55" y="53" text-anchor="middle" font-size="15" font-weight="700" fill="var(--os)" font-family="Roboto">${total}</text><text x="55" y="64" text-anchor="middle" font-size="7" fill="var(--ol)">Total</text></svg><div class="donut-legend">${legend}</div>`;
+}
+
+function renderMonthlyBars(cid,data,color){
+    const now=new Date();const ms=[];
+    for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);ms.push({key:d.getFullYear()+'-'+(d.getMonth()+1),label:MONTHS[d.getMonth()]})}
+    const vals=ms.map(m=>data[m.key]||0);const max=Math.max(...vals,1);
+    $(cid).innerHTML=ms.map((m,i)=>{const h=Math.max((vals[i]/max)*100,2);return`<div class="bar-col"><div class="bar-val">${vals[i]||''}</div><div class="bar" style="height:${h}px;background:${color}"></div><div class="bar-lbl">${m.label}</div></div>`}).join('');
+}
+
+function renderDistBars(){
+    const entries=Object.entries(stats.districtData).sort((a,b)=>b[1].total-a[1].total).slice(0,10);
+    const max=entries.length?entries[0][1].total:1;
+    $('distChart').innerHTML=entries.map(([key,d])=>{
+        const idx=DIST_KEY.indexOf(key);const name=idx>=0?DIST_EN[idx]:key;
+        return`<div class="hbar-row"><div class="hbar-label">${name}</div><div class="hbar-track"><div class="hbar-fill" style="width:${d.total/max*100}%;background:linear-gradient(90deg,#1565C0,#42A5F5)"></div></div><div class="hbar-val">${d.total}</div></div>`;
+    }).join('')||'<p style="font-size:11px;color:var(--osv)">No data</p>';
+}
+
+function renderReporterBars(){
+    const entries=Object.entries(stats.reporters).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    const max=entries.length?entries[0][1]:1;
+    $('reporterChart').innerHTML=entries.map(([name,count])=>`<div class="hbar-row"><div class="hbar-label">${name}</div><div class="hbar-track"><div class="hbar-fill" style="width:${count/max*100}%;background:linear-gradient(90deg,var(--p),#66BB6A)"></div></div><div class="hbar-val">${count}</div></div>`).join('')||'<p style="font-size:11px;color:var(--osv)">No data</p>';
+}
+
+function renderTimeline(){
+    const tl=$('timeline');tl.innerHTML='';
+    const recent=reports.slice(0,15);
+    if(!recent.length){tl.innerHTML='<p style="font-size:11px;color:var(--osv)">No data</p>';return}
+    recent.forEach(r=>{
+        const isSight=r.type==='sighting';
+        const dt=r.timestamp?new Date(r.timestamp).toLocaleDateString('en',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'---';
+        let text='';
+        if(isSight)text=`${r.districtEn||r.district||''} - ${r.count||1} ${r.elType==='tusker'?'Tusker(s)':'Elephant(s)'}`;
+        else{const p=[];if(r.injury>0)p.push(`${r.injury} injured`);if(r.death>0)p.push(`${r.death} dead`);text=`${r.districtEn||r.district||''} - ${p.join(', ')}`}
+        tl.innerHTML+=`<div class="tl-item"><div class="tl-dot ${isSight?'bl':'rd'}"></div><div class="tl-date">${dt}</div><div class="tl-text"><span class="tl-badge ${isSight?'sight':'acc'}">${isSight?'Sighting':'Accident'}</span> ${text}</div></div>`;
+    });
+}
+
+function renderMap(){
+    const map=L.map('coverageMap',{zoomControl:false,attributionControl:false}).setView([7.87,80.77],7.2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(map);
+    DIST_KEY.forEach((dk,i)=>{
+        const d=stats.districtData[dk];
+        if(d&&d.total>0){
+            const size=Math.min(12+d.total*2,30);
+            const color=d.accidents>0?'#C62828':'#1565C0';
+            L.marker(DIST_COORDS[i],{icon:L.divIcon({className:'',html:`<div style="width:${size}px;height:${size}px;background:${color};opacity:.7;border-radius:50%;border:2px solid #FFF;display:flex;align-items:center;justify-content:center;color:#FFF;font-size:8px;font-weight:700;font-family:Roboto">${d.total}</div>`,iconSize:[size,size],iconAnchor:[size/2,size/2]})}).addTo(map).bindPopup(`<b>${DIST_EN[i]}</b><br>Sightings: ${d.sightings}<br>Accidents: ${d.accidents}<br>Deaths: ${d.deaths}`);
+        }
+    });
+}
+
+function renderDistTable(){
+    const tbody=$('distTbody');tbody.innerHTML='';
+    const entries=DIST_KEY.map((dk,i)=>{const d=stats.districtData[dk]||{sightings:0,accidents:0,deaths:0,injuries:0,total:0};return{name:DIST_EN[i],...d}}).filter(d=>d.total>0).sort((a,b)=>b.total-a.total);
+    entries.forEach(d=>{tbody.innerHTML+=`<tr><td><span class="dist-dot" style="background:${d.accidents>0?'#C62828':'#1565C0'}"></span>${d.name}</td><td>${d.sightings}</td><td>${d.accidents}</td><td>${d.deaths}</td><td>${d.injuries}</td><td><strong>${d.total}</strong></td></tr>`});
+    if(!entries.length)tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--osv);padding:14px;font-size:11px">No data available</td></tr>';
+}
+
+// PDF GENERATION - 4+ PAGES (ALL ENGLISH)
+$('dlPdf').addEventListener('click',()=>{
+    const{jsPDF}=window.jspdf;
+    const doc=new jsPDF('p','mm','a4');
+    const W=210,M=15;let Y;
+
+    function hdr(sub){
+        doc.setFillColor(27,94,32);doc.rect(0,0,W,24,'F');
+        doc.setTextColor(255);doc.setFontSize(15);doc.text('EMA - Elephant Monitoring App',W/2,10,{align:'center'});
+        doc.setFontSize(8);doc.text('Analytics Report | '+new Date().toLocaleDateString('en',{year:'numeric',month:'long',day:'numeric'}),W/2,17,{align:'center'});
+        Y=32;doc.setTextColor(33,33,33);
+        if(sub){doc.setFontSize(12);doc.setTextColor(27,94,32);doc.text(sub,M,Y);Y+=8;doc.setTextColor(33,33,33)}
+    }
+    function ftr(p){doc.setFillColor(27,94,32);doc.rect(0,287,W,10,'F');doc.setTextColor(255);doc.setFontSize(6);doc.text('EMA Analytics | Page '+p+' | Generated: '+new Date().toLocaleString(),W/2,292,{align:'center'})}
+    function sec(t){doc.setFontSize(10);doc.setTextColor(27,94,32);doc.text(t,M,Y);Y+=6;doc.setTextColor(33,33,33)}
+    function kv(k,v){doc.setFontSize(8);doc.setTextColor(100);doc.text(k,M,Y);doc.setFontSize(10);doc.setTextColor(33,33,33);doc.text(String(v),M+55,Y);Y+=5.5}
+
+    // PAGE 1
+    hdr('Overview Summary');
+    sec('Key Statistics');
+    kv('Total Users',stats.totalUsers);kv('EMA Agents',stats.totalAgents);kv('Total Reports',stats.totalReports);
+    kv('Sightings',stats.sightings);kv('Accidents',stats.accidents);kv('Elephants Spotted',stats.totalElephants);
+    kv('Total Deaths',stats.totalDeaths);kv('Total Injuries',stats.totalInjuries);kv('Districts Covered',stats.districts.size);
+    Y+=4;sec('Report Distribution');
+    const sPct=stats.totalReports?Math.round(stats.sightings/stats.totalReports*100):0;
+    const aPct=stats.totalReports?Math.round(stats.accidents/stats.totalReports*100):0;
+    kv('Sightings',sPct+'%');kv('Accidents',aPct+'%');
+    Y+=4;sec('Elephant Types');
+    kv('Regular Elephants',stats.elephantTypes.elephant);kv('Tuskers',stats.elephantTypes.tusker);
+    Y+=4;sec('6-Month Trend Summary');
+    const now=new Date();
+    for(let i=5;i>=0;i--){
+        const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+        const mk=d.getFullYear()+'-'+(d.getMonth()+1);
+        const ml=MONTHS[d.getMonth()]+' '+d.getFullYear();
+        kv(ml,'Sightings: '+(stats.monthlySightings[mk]||0)+' | Deaths: '+(stats.monthlyDeaths[mk]||0));
+    }
+    ftr(1);
+
+    // PAGE 2
+    doc.addPage();hdr('District Analysis');
+    sec('District Summary Table');
+    doc.setFontSize(7);doc.setTextColor(100);
+    doc.text('District',M,Y);doc.text('Sight.',M+45,Y);doc.text('Acc.',M+60,Y);doc.text('Deaths',M+75,Y);doc.text('Inj.',M+92,Y);doc.text('Total',M+107,Y);
+    Y+=3;doc.setDrawColor(200);doc.line(M,Y,W-M,Y);Y+=3;
+    doc.setFontSize(8);doc.setTextColor(33,33,33);
+    const dEntries=DIST_KEY.map((dk,i)=>{const d=stats.districtData[dk]||{sightings:0,accidents:0,deaths:0,injuries:0,total:0};return{name:DIST_EN[i],...d}}).filter(d=>d.total>0).sort((a,b)=>b.total-a.total);
+    dEntries.forEach(d=>{
+        if(Y>272){doc.addPage();hdr('');Y=32}
+        doc.text(d.name,M,Y);doc.text(String(d.sightings),M+48,Y);doc.text(String(d.accidents),M+63,Y);
+        doc.text(String(d.deaths),M+78,Y);doc.text(String(d.injuries),M+94,Y);
+        doc.setTextColor(27,94,32);doc.text(String(d.total),M+110,Y);doc.setTextColor(33,33,33);Y+=5;
+    });
+    if(!dEntries.length){doc.text('No district data available',M,Y);Y+=6}
+    Y+=6;sec('Top 5 Districts by Reports');
+    dEntries.slice(0,5).forEach((d,i)=>{
+        const bW=Math.max((d.total/(dEntries[0]?.total||1))*100,2);
+        doc.setFillColor(i%2===0?21:66,i%2===0?101:187,i%2===0?192:69);
+        doc.rect(M,Y,bW*.7,4,'F');
+        doc.setFontSize(7);doc.setTextColor(33,33,33);doc.text(d.name+': '+d.total,M+bW*.7+3,Y+3);Y+=7;
+    });
+    Y+=6;sec('Districts with Highest Deaths');
+    const deathDist=dEntries.filter(d=>d.deaths>0).sort((a,b)=>b.deaths-a.deaths).slice(0,5);
+    deathDist.forEach(d=>{
+        const bW=Math.max((d.deaths/(deathDist[0]?.deaths||1))*100,2);
+        doc.setFillColor(198,40,40);doc.rect(M,Y,bW*.7,4,'F');
+        doc.setFontSize(7);doc.text(d.name+': '+d.deaths+' deaths',M+bW*.7+3,Y+3);Y+=7;
+    });
+    if(!deathDist.length){doc.setFontSize(8);doc.text('No deaths recorded',M,Y);Y+=6}
+    ftr(2);
+
+    // PAGE 3
+    doc.addPage();hdr('Monthly Trends');
+    sec('Monthly Elephant Deaths (12 Months)');
+    const ms12=[];
+    for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);ms12.push({key:d.getFullYear()+'-'+(d.getMonth()+1),label:MONTHS[d.getMonth()]+' '+String(d.getFullYear()).slice(2)})}
+    const dVals=ms12.map(m=>stats.monthlyDeaths[m.key]||0);
+    const maxD=Math.max(...dVals,1);
+    ms12.forEach((m,i)=>{
+        const bW=Math.max((dVals[i]/maxD)*110,1);
+        doc.setFillColor(198,40,40);doc.rect(M,Y,bW*.6,3,'F');
+        doc.setFontSize(6);doc.setTextColor(33,33,33);doc.text(m.label+': '+dVals[i],M+bW*.6+2,Y+2);Y+=4.5;
+    });
+    Y+=5;sec('Monthly Sightings (12 Months)');
+    const sVals=ms12.map(m=>stats.monthlySightings[m.key]||0);
+    const maxS=Math.max(...sVals,1);
+    ms12.forEach((m,i)=>{
+        const bW=Math.max((sVals[i]/maxS)*110,1);
+        doc.setFillColor(21,101,192);doc.rect(M,Y,bW*.6,3,'F');
+        doc.setFontSize(6);doc.setTextColor(33,33,33);doc.text(m.label+': '+sVals[i],M+bW*.6+2,Y+2);Y+=4.5;
+    });
+    Y+=5;sec('Month-over-Month Comparison');
+    doc.setFontSize(6);doc.setTextColor(100);
+    doc.text('Month',M,Y);doc.text('Sightings',M+30,Y);doc.text('Deaths',M+52,Y);doc.text('Change',M+70,Y);
+    Y+=3;doc.line(M,Y,M+90,Y);Y+=2;doc.setTextColor(33,33,33);doc.setFontSize(7);
+    ms12.forEach((m,i)=>{
+        const prev=i>0?dVals[i-1]:0;const chg=dVals[i]-prev;
+        doc.text(m.label,M,Y);doc.text(String(sVals[i]),M+35,Y);doc.text(String(dVals[i]),M+55,Y);
+        if(chg>0){doc.setTextColor(198,40,40);doc.text('+'+chg,M+72,Y)}
+        else if(chg<0){doc.setTextColor(27,94,32);doc.text(String(chg),M+72,Y)}
+        else{doc.setTextColor(150);doc.text('0',M+72,Y)}
+        doc.setTextColor(33,33,33);Y+=4;
+    });
+    ftr(3);
+
+    // PAGE 4
+    doc.addPage();hdr('Timeline & Reporters');
+    sec('Recent Report Timeline');
+    const recent=reports.slice(0,20);
+    recent.forEach(r=>{
+        if(Y>268){doc.addPage();hdr('');Y=32}
+        const isSight=r.type==='sighting';
+        const dt=r.timestamp?new Date(r.timestamp).toLocaleDateString('en',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'---';
+        doc.setFillColor(isSight?21:198,isSight?101:40,isSight?192:40);doc.circle(M+2,Y-1,1.5,'F');
+        doc.setFontSize(6);doc.setTextColor(100);doc.text(dt,M+6,Y);
+        doc.setFontSize(7);doc.setTextColor(33,33,33);
+        let txt=isSight?'Sighting: '+(r.count||1)+' '+(r.elType==='tusker'?'Tusker':'Elephant'):'Accident: '+(r.injury||0)+' inj, '+(r.death||0)+' dead';
+        txt+=' - '+(r.districtEn||r.district||'');doc.text(txt,M+30,Y);Y+=4.5;
+    });
+    Y+=6;sec('Top 10 Reporters');
+    const topR=Object.entries(stats.reporters).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    const maxR=topR.length?topR[0][1]:1;
+    topR.forEach(([name,count])=>{
+        if(Y>275){doc.addPage();hdr('');Y=32}
+        const bW=Math.max((count/maxR)*100,2);
+        doc.setFillColor(27,94,32);doc.rect(M,Y,bW*.6,3,'F');
+        doc.setFontSize(7);doc.text(name+': '+count,M+bW*.6+3,Y+2);Y+=5.5;
+    });
+    Y+=6;sec('Conclusions');
+    doc.setFontSize(8);
+    const conclusions=[
+        'A total of '+stats.totalUsers+' users have registered on the EMA platform.',
+        stats.totalAgents+' agents are actively monitoring and verifying data.',
+        stats.totalReports+' reports have been submitted, with '+stats.sightings+' sightings and '+stats.accidents+' accidents.',
+        'A total of '+stats.totalElephants+' elephants have been spotted, including '+stats.elephantTypes.tusker+' tuskers.',
+        stats.totalDeaths+' elephant deaths and '+stats.totalInjuries+' injuries have been recorded.',
+        stats.districts.size+' out of 25 districts are covered by EMA reports.',
+        'This data is crucial for reducing human-elephant conflict and planning conservation efforts.',
+        'Regular monitoring and timely reporting help protect both elephants and communities.',
+        'EMA agents play a vital role in verifying report accuracy and maintaining data integrity.',
+        'Continued expansion of district coverage will improve the effectiveness of early warning systems.'
+    ];
+    conclusions.forEach(c=>{
+        if(Y>278){doc.addPage();hdr('');Y=32}
+        const lines=doc.splitTextToSize('  '+c,W-2*M);doc.text(lines,M,Y);Y+=lines.length*4+2;
+    });
+    ftr(4);
+
+    doc.save('EMA_Analytics_Report.pdf');
+    snk('PDF report downloaded');
+});
+
+init();
+</script>
+</body>
+</html>

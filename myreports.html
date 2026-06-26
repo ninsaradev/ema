@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EMA - මගේ වාර්තා</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        :root{
+            --p:#1B5E20;--op:#FFF;--pc:#A5D6A7;--opc:#0A3A0A;
+            --sc:#D0E8D2;--osc:#0C1F12;--sf:#F8FAF6;--scl:#FFF;
+            --sc2:#ECF0EA;--sc3:#E7EAE4;--sc4:#E1E4DE;
+            --os:#191D19;--osv:#414942;--ol:#727970;--olv:#C1C9BF;
+            --er:#BA1A1A;--erc:#FFDAD6;--oer:#FFF;
+            --r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:28px;--r-full:9999px;
+            --e1:0 1px 3px 1px rgba(0,0,0,.08),0 1px 2px 0 rgba(0,0,0,.12);
+            --e2:0 2px 6px 2px rgba(0,0,0,.08),0 1px 2px 0 rgba(0,0,0,.12);
+        }
+        html,body{height:100%;overflow:hidden;font-family:'Noto Sans Sinhala','Roboto',sans-serif;background:var(--sf);color:var(--os)}
+        .hidden{display:none!important}
+        .app{display:flex;flex-direction:column;height:100dvh;height:100vh;overflow:hidden}
+
+        /* LOADER */
+        .fload{display:none;position:fixed;inset:0;background:var(--sf);z-index:9999;justify-content:center;align-items:center;flex-direction:column;gap:12px}
+        .fload.show{display:flex}
+        .sp{width:32px;height:32px;border:3px solid var(--sc4);border-top-color:var(--p);border-radius:50%;animation:sp .8s linear infinite}
+        .sp.lg{width:40px;height:40px;border-width:4px}
+        @keyframes sp{to{transform:rotate(360deg)}}
+
+        /* TOPBAR */
+        .topbar{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--scl);border-bottom:1px solid var(--olv);flex-shrink:0;z-index:100}
+        .topbar h1{font-size:15px;font-weight:700;color:var(--p);flex:1}
+        .ib{width:36px;height:36px;border:none;background:transparent;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--osv);transition:background .12s;flex-shrink:0}
+        .ib:hover{background:var(--sc3)}
+
+        /* SUMMARY */
+        .summary{display:flex;gap:6px;padding:8px 12px;background:var(--scl);border-bottom:1px solid var(--sc2);flex-shrink:0}
+        .sum-card{flex:1;background:var(--sc2);border-radius:var(--r-sm);padding:8px;text-align:center}
+        .sum-val{font-size:20px;font-weight:700;color:var(--os);font-family:'Roboto',monospace}
+        .sum-lbl{font-size:9px;color:var(--osv)}
+        .sum-card.sight .sum-val{color:#1565C0}
+        .sum-card.acc .sum-val{color:#C62828}
+        .sum-card.total .sum-val{color:var(--p)}
+
+        /* FILTERS */
+        .filter-bar{display:flex;gap:6px;padding:6px 12px;overflow-x:auto;flex-shrink:0;background:var(--sf);-webkit-overflow-scrolling:touch}
+        .filter-bar::-webkit-scrollbar{display:none}
+        .fc{display:flex;align-items:center;gap:3px;padding:5px 10px;border:1px solid var(--olv);border-radius:var(--r-full);font-size:10px;font-weight:500;cursor:pointer;background:var(--scl);color:var(--osv);white-space:nowrap;transition:all .12s;flex-shrink:0;font-family:inherit}
+        .fc.active{background:var(--p);color:var(--op);border-color:var(--p)}
+        .fc .material-icons-round{font-size:13px}
+
+        /* SORT */
+        .sort-bar{display:flex;align-items:center;justify-content:space-between;padding:4px 12px;flex-shrink:0}
+        .sort-label{font-size:10px;color:var(--ol)}
+        .sort-btn{display:flex;align-items:center;gap:3px;padding:4px 8px;border:none;background:transparent;border-radius:var(--r-sm);cursor:pointer;font-family:inherit;font-size:10px;color:var(--p);font-weight:500}
+        .sort-btn:hover{background:var(--sc2)}
+        .sort-btn .material-icons-round{font-size:14px}
+
+        /* SCROLL */
+        .scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:4px 12px 20px}
+
+        /* REPORT PILL */
+        .rp{display:flex;align-items:stretch;background:var(--scl);border:1px solid var(--olv);border-radius:var(--r-md);margin-bottom:6px;overflow:hidden;transition:background .12s}
+        .rp:hover{background:var(--sc2)}
+        .rp-side{width:4px;flex-shrink:0}
+        .rp-side.bl{background:#1565C0}
+        .rp-side.rd{background:#C62828}
+        .rp-main{flex:1;padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:10px;min-width:0}
+        .rp-icon{width:36px;height:36px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+        .rp-icon.sight{background:#E3F2FD}.rp-icon.sight .material-icons-round{color:#1565C0;font-size:20px}
+        .rp-icon.acc{background:#FFEBEE}.rp-icon.acc .material-icons-round{color:#C62828;font-size:20px}
+        .rp-body{flex:1;min-width:0}
+        .rp-title{font-size:12px;font-weight:600;color:var(--os);margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .rp-sub{font-size:10px;color:var(--osv);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .rp-meta{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0;margin-right:4px}
+        .rp-time{font-size:8px;color:var(--ol);font-family:'Roboto',sans-serif}
+        .rp-dist{font-size:8px;color:var(--p);font-weight:500;background:var(--pc);padding:1px 5px;border-radius:var(--r-full)}
+        .rp-emerg{display:flex;align-items:center;gap:1px;font-size:7px;color:var(--er);font-weight:600}
+        .rp-emerg .material-icons-round{font-size:9px}
+        .rp-actions{display:flex;flex-direction:column;border-left:1px solid var(--sc2);flex-shrink:0}
+        .rp-act{width:40px;flex:1;display:flex;align-items:center;justify-content:center;border:none;background:transparent;cursor:pointer;color:var(--osv);transition:background .12s}
+        .rp-act:hover{background:var(--sc3)}
+        .rp-act .material-icons-round{font-size:18px}
+        .rp-act.del{color:var(--er)}
+        .rp-act.del:hover{background:var(--erc)}
+        .rp-act-divider{height:1px;background:var(--sc2)}
+
+        .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 20px;gap:10px}
+        .empty .material-icons-round{font-size:44px;color:var(--olv)}
+        .empty h3{font-size:13px;color:var(--osv)}
+        .empty p{font-size:10px;color:var(--ol)}
+
+        /* SCRIM */
+        .scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;justify-content:center;align-items:flex-end}
+        .scrim.show{display:flex}
+        .scrim.center{align-items:center;padding:12px}
+        .sheet{background:var(--scl);border-radius:var(--r-xl) var(--r-xl) 0 0;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;animation:sUp .2s ease-out}
+        @keyframes sUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+        .sh-handle{width:32px;height:4px;background:var(--olv);border-radius:2px;margin:8px auto 0}
+        .sh-hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 4px}
+        .sh-hdr h3{font-size:15px;font-weight:600;flex:1}
+        .sh-body{padding:0 16px 20px}
+        .dlg{background:var(--scl);border-radius:var(--r-xl);padding:18px;width:100%;max-width:380px;max-height:85vh;overflow-y:auto;animation:dIn .2s ease-out}
+        @keyframes dIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+        .da{display:flex;justify-content:flex-end;gap:6px;margin-top:12px}
+
+        /* DETAIL */
+        .det-section{margin-bottom:12px}
+        .det-label{font-size:9px;color:var(--ol);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px;display:flex;align-items:center;gap:3px}
+        .det-label .material-icons-round{font-size:11px}
+        .det-value{font-size:12px;font-weight:500;color:var(--os)}
+        .det-row{display:flex;gap:6px}
+        .det-card{flex:1;background:var(--sc2);border-radius:var(--r-sm);padding:8px;text-align:center}
+        .det-card .dv{font-size:18px;font-weight:700;font-family:'Roboto',monospace}
+        .det-card .dl{font-size:8px;color:var(--osv)}
+        .det-chip{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:var(--r-full);font-size:10px;font-weight:500;margin-right:4px;margin-bottom:4px}
+        .det-chip.sight{background:#E3F2FD;color:#0D47A1}
+        .det-chip.acc{background:#FFEBEE;color:#B71C1C}
+        .det-chip.emerg{background:var(--erc);color:var(--er)}
+        .det-chip.agent{background:#E8F5E9;color:var(--p)}
+        .det-chip .material-icons-round{font-size:12px}
+        .det-desc{font-size:11px;color:var(--os);background:var(--sc2);border-radius:var(--r-sm);padding:8px;font-style:italic;line-height:1.5}
+        .det-img-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+        .det-img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:var(--r-sm);cursor:pointer}
+        .det-map{width:100%;height:160px;border-radius:var(--r-md);overflow:hidden;margin-top:4px}
+        .leaflet-control-zoom,.leaflet-control-attribution{display:none!important}
+        .det-actions{display:flex;gap:6px;flex-wrap:wrap}
+        .det-actions .btn{flex:1;min-width:80px}
+
+        /* BUTTONS */
+        .btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:8px 14px;border:none;border-radius:var(--r-full);font-size:11px;font-weight:500;font-family:inherit;cursor:pointer;transition:all .12s;min-height:34px}
+        .btn .material-icons-round{font-size:15px}
+        .btn-f{background:var(--p);color:var(--op)}.btn-f:hover{box-shadow:var(--e1)}
+        .btn-o{background:transparent;color:var(--p);border:1px solid var(--ol)}
+        .btn-t{background:transparent;color:var(--p);padding:6px 8px;min-height:auto}
+        .btn-d{background:var(--er);color:var(--oer)}
+        .btn-w{width:100%}
+
+        .snk{position:fixed;bottom:14px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--os);color:var(--sf);padding:10px 16px;border-radius:var(--r-sm);font-size:11px;z-index:3000;transition:transform .3s;max-width:88%;font-family:inherit}
+        .snk.show{transform:translateX(-50%) translateY(0)}
+
+        /* IMAGE VIEWER */
+        .img-vw{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:600;justify-content:center;align-items:center}
+        .img-vw.show{display:flex}
+        .img-vw img{max-width:95%;max-height:90%;object-fit:contain}
+        .img-vw-close{position:absolute;top:12px;right:12px;width:38px;height:38px;background:rgba(255,255,255,.15);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#FFF}
+    </style>
+</head>
+<body>
+<div class="app">
+    <div class="fload show" id="pl"><div class="sp lg"></div><p style="font-size:12px;color:var(--osv)">වාර්තා පූරණය වෙමින්...</p></div>
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <button class="ib" onclick="location.href='main.html'"><span class="material-icons-round">arrow_back</span></button>
+        <h1>මගේ වාර්තා</h1>
+        <button class="ib" onclick="location.href='rep.html'" title="නව වාර්තාවක්"><span class="material-icons-round">add</span></button>
+        <button class="ib" onclick="location.href='main.html'" title="මුල් පිටුව"><span class="material-icons-round">home</span></button>
+    </div>
+
+    <!-- SUMMARY -->
+    <div class="summary">
+        <div class="sum-card sight"><div class="sum-val" id="smS">0</div><div class="sum-lbl">නිරීක්ෂණ</div></div>
+        <div class="sum-card acc"><div class="sum-val" id="smA">0</div><div class="sum-lbl">අනතුරු</div></div>
+        <div class="sum-card total"><div class="sum-val" id="smT">0</div><div class="sum-lbl">මුළු</div></div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filter-bar">
+        <button class="fc active" data-f="all"><span class="material-icons-round">filter_list</span>සියල්ල</button>
+        <button class="fc" data-f="sighting"><span class="material-icons-round">visibility</span>නිරීක්ෂණ</button>
+        <button class="fc" data-f="accident"><span class="material-icons-round">report</span>අනතුරු</button>
+        <button class="fc" data-f="emergency"><span class="material-icons-round">emergency</span>හදිසි</button>
+        <button class="fc" data-f="tusker"><span class="material-icons-round">star</span>දළ ඇතා</button>
+    </div>
+
+    <!-- SORT -->
+    <div class="sort-bar">
+        <span class="sort-label" id="countLabel">වාර්තා 0ක්</span>
+        <button class="sort-btn" id="sortBtn"><span class="material-icons-round">swap_vert</span>නවතම</button>
+    </div>
+
+    <!-- SCROLL -->
+    <div class="scroll" id="scroll">
+        <div id="listContainer"></div>
+    </div>
+</div>
+
+<!-- DETAIL SHEET -->
+<div class="scrim" id="detScrim">
+    <div class="sheet">
+        <div class="sh-handle"></div>
+        <div class="sh-hdr"><h3 id="detTitle">විස්තර</h3><button class="ib" id="detClose"><span class="material-icons-round">close</span></button></div>
+        <div class="sh-body" id="detBody"></div>
+    </div>
+</div>
+
+<!-- DELETE CONFIRM -->
+<div class="scrim center" id="delScrim">
+    <div class="dlg">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--erc);display:flex;align-items:center;justify-content:center;margin:0 auto 8px"><span class="material-icons-round" style="font-size:22px;color:var(--er)">delete_forever</span></div>
+        <h3 style="text-align:center;font-size:14px;margin-bottom:6px">මෙම වාර්තාව මකන්න</h3>
+        <p style="text-align:center;font-size:11px;color:var(--osv);margin-bottom:12px">මෙම ක්‍රියාව ආපසු හැරවිය නොහැක. දත්ත ස්ථිරවම මකා දැමෙනු ඇත.</p>
+        <div class="da" style="justify-content:center;gap:8px">
+            <button class="btn btn-t" id="delCancel">අවලංගුයි</button>
+            <button class="btn btn-d" id="delConfirm"><span class="material-icons-round">delete</span>මකා දමන්න</button>
+        </div>
+    </div>
+</div>
+
+<!-- IMAGE VIEWER -->
+<div class="img-vw" id="imgVw">
+    <button class="img-vw-close" id="imgVwClose"><span class="material-icons-round">close</span></button>
+    <img id="imgVwSrc" src="" alt="">
+</div>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import{getDatabase,ref,get,child,remove}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js";
+
+const fb=initializeApp({apiKey:"AIzaSyBxhaRpjccuhoKE3T8WYRihy1rDXtRhGO4",authDomain:"ema-4-b10bd.firebaseapp.com",databaseURL:"https://ema-4-b10bd-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"ema-4-b10bd",storageBucket:"ema-4-b10bd.firebasestorage.app",messagingSenderId:"149141817573",appId:"1:149141817573:web:409bfb4d9c2b84cf742c0c"});
+const db=getDatabase(fb);
+
+let U=null,eid=null,myReports=[],currentFilter='all',sortNewest=true,deleteId=null,detMap=null;
+const $=i=>document.getElementById(i);
+const S=i=>$(i).classList.add('show');
+const H=i=>$(i).classList.remove('show');
+function snk(m){let s=document.querySelector('.snk');if(!s){s=document.createElement('div');s.className='snk';document.body.appendChild(s)}s.textContent=m;s.classList.add('show');setTimeout(()=>s.classList.remove('show'),3e3)}
+function fk(i){return i.replace(/-/g,'_')}
+function timeStr(ts){if(!ts)return'---';const d=new Date(ts);return d.toLocaleDateString('si-LK',{year:'numeric',month:'short',day:'numeric'})+' '+d.toLocaleTimeString('si-LK',{hour:'2-digit',minute:'2-digit'})}
+function timeAgo(ts){const d=Date.now()-new Date(ts).getTime();const m=Math.floor(d/6e4);if(m<1)return'දැන්';if(m<60)return m+'m';const h=Math.floor(m/60);if(h<24)return h+'h';const dy=Math.floor(h/24);if(dy<30)return dy+'d';return Math.floor(dy/30)+'mo'}
+
+async function init(){
+    const raw=localStorage.getItem('ema_user'),sid=localStorage.getItem('ema_id');
+    if(!raw||!sid){location.href='index.html';return}
+    eid=sid;U=JSON.parse(raw);
+    await loadReports();
+    setupFilters();
+    renderList();
+    $('pl').classList.remove('show');
+}
+
+async function loadReports(){
+    myReports=[];
+    try{
+        const snap=await get(child(ref(db),'reports'));
+        if(!snap.exists())return;
+        const data=snap.val();
+        for(const k in data){const r=data[k];if(r.reporterEmaId===eid){r._id=k;myReports.push(r)}}
+    }catch(e){console.warn(e)}
+}
+
+function getFiltered(){
+    let list=[...myReports];
+    switch(currentFilter){
+        case'sighting':list=list.filter(r=>r.type==='sighting');break;
+        case'accident':list=list.filter(r=>r.type==='accident');break;
+        case'emergency':list=list.filter(r=>r.emergency===true);break;
+        case'tusker':list=list.filter(r=>r.elType==='tusker');break;
+    }
+    list.sort((a,b)=>sortNewest?new Date(b.timestamp)-new Date(a.timestamp):new Date(a.timestamp)-new Date(b.timestamp));
+    return list;
+}
+
+function updateSummary(){
+    const s=myReports.filter(r=>r.type==='sighting').length;
+    const a=myReports.filter(r=>r.type==='accident').length;
+    $('smS').textContent=s;$('smA').textContent=a;$('smT').textContent=myReports.length;
+}
+
+function setupFilters(){
+    document.querySelectorAll('.fc').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+            document.querySelectorAll('.fc').forEach(b=>b.classList.remove('active'));
+            btn.classList.add('active');currentFilter=btn.dataset.f;renderList();
+        });
+    });
+    $('sortBtn').addEventListener('click',()=>{
+        sortNewest=!sortNewest;
+        $('sortBtn').innerHTML=`<span class="material-icons-round">swap_vert</span>${sortNewest?'නවතම':'පැරණිතම'}`;
+        renderList();
+    });
+}
+
+function renderList(){
+    updateSummary();
+    const container=$('listContainer');container.innerHTML='';
+    const list=getFiltered();
+    $('countLabel').textContent=`වාර්තා ${list.length}ක්`;
+    if(!list.length){
+        container.innerHTML=`<div class="empty"><span class="material-icons-round">inbox</span><h3>වාර්තා නොමැත</h3><p>නව වාර්තාවක් සාදන්න</p></div>`;
+        return;
+    }
+    list.forEach(r=>{
+        const pill=document.createElement('div');pill.className='rp';
+        const isSight=r.type==='sighting';
+        let title='',sub='';
+        if(isSight){
+            title=`අලි ${r.count||1}ක් නිරීක්ෂණය`;
+            sub=`${r.elType==='tusker'?'දළ ඇතා':'අලියා'}${r.description?' · '+r.description:''}`;
+        }else{
+            const parts=[];if(r.injury>0)parts.push(`තුවාල ${r.injury}`);if(r.death>0)parts.push(`මරණ ${r.death}`);
+            title='අලි අනතුරක්';sub=`${parts.join(', ')}${r.description?' · '+r.description:''}`;
+        }
+        const emergH=r.emergency?'<div class="rp-emerg"><span class="material-icons-round">warning</span>හදිසි</div>':'';
+        const imgCount=(r.images||[]).filter(Boolean).length;
+
+        pill.innerHTML=`
+            <div class="rp-side ${isSight?'bl':'rd'}"></div>
+            <div class="rp-main" data-id="${r._id}">
+                <div class="rp-icon ${isSight?'sight':'acc'}"><span class="material-icons-round">${isSight?'visibility':'report'}</span></div>
+                <div class="rp-body">
+                    <div class="rp-title">${title}</div>
+                    <div class="rp-sub">${sub}</div>
+                </div>
+                <div class="rp-meta">
+                    <div class="rp-time">${timeAgo(r.timestamp)}</div>
+                    <div class="rp-dist">${r.district||''}</div>
+                    ${emergH}
+                </div>
+            </div>
+            <div class="rp-actions">
+                <button class="rp-act view-btn" data-id="${r._id}" title="බලන්න"><span class="material-icons-round">open_in_new</span></button>
+                <div class="rp-act-divider"></div>
+                <button class="rp-act pdf-btn" data-id="${r._id}" title="PDF"><span class="material-icons-round">download</span></button>
+                <div class="rp-act-divider"></div>
+                <button class="rp-act del del-btn" data-id="${r._id}" title="මකන්න"><span class="material-icons-round">delete_outline</span></button>
+            </div>`;
+
+        // Bind main click
+        pill.querySelector('.rp-main').addEventListener('click',()=>openDetail(r));
+        pill.querySelector('.view-btn').addEventListener('click',e=>{e.stopPropagation();openDetail(r)});
+        pill.querySelector('.pdf-btn').addEventListener('click',e=>{e.stopPropagation();generatePdf(r)});
+        pill.querySelector('.del-btn').addEventListener('click',e=>{e.stopPropagation();deleteId=r._id;S('delScrim')});
+        container.appendChild(pill);
+    });
+}
+
+// DETAIL
+function openDetail(r){
+    const isSight=r.type==='sighting';
+    $('detTitle').textContent=isSight?'නිරීක්ෂණ විස්තර':'අනතුරු විස්තර';
+    let html='';
+
+    // Chips
+    html+=`<div class="det-section">`;
+    html+=`<div class="det-chip ${isSight?'sight':'acc'}"><span class="material-icons-round">${isSight?'visibility':'report'}</span>${isSight?'අලි නිරීක්ෂණය':'අලි අනතුරක්'}</div>`;
+    if(r.agentReport)html+=`<div class="det-chip agent"><span class="material-icons-round">verified</span>නියෝජිත</div>`;
+    if(r.emergency)html+=`<div class="det-chip emerg"><span class="material-icons-round">emergency</span>හදිසි</div>`;
+    html+=`</div>`;
+
+    // Counts
+    if(isSight){
+        html+=`<div class="det-section"><div class="det-row"><div class="det-card"><div class="dv" style="color:#1565C0">${r.count||1}</div><div class="dl">අලි ගණන</div></div><div class="det-card"><div class="dv" style="font-size:13px;color:var(--os)">${r.elType==='tusker'?'දළ ඇතා':'අලියා'}</div><div class="dl">වර්ගය</div></div></div></div>`;
+    }else{
+        html+=`<div class="det-section"><div class="det-row"><div class="det-card"><div class="dv" style="color:#E65100">${r.injury||0}</div><div class="dl">තුවාල</div></div><div class="det-card"><div class="dv" style="color:#B71C1C">${r.death||0}</div><div class="dl">මරණ</div></div></div></div>`;
+    }
+
+    // District
+    html+=`<div class="det-section"><div class="det-label"><span class="material-icons-round">location_on</span>දිස්ත්‍රික්කය</div><div class="det-value">${r.district||'---'} ${r.districtEn?'('+r.districtEn+')':''}</div></div>`;
+
+    // Time
+    html+=`<div class="det-section"><div class="det-label"><span class="material-icons-round">schedule</span>වේලාව</div><div class="det-value">${timeStr(r.timestamp)}</div></div>`;
+
+    // Coordinates
+    if(r.lat&&r.lng){
+        html+=`<div class="det-section"><div class="det-label"><span class="material-icons-round">gps_fixed</span>ඛණ්ඩාංක</div><div class="det-value" style="font-size:10px;font-family:'Roboto',monospace">${r.lat.toFixed(6)}, ${r.lng.toFixed(6)}</div><div class="det-map" id="detMapC"></div></div>`;
+    }
+
+    // Description
+    if(r.description)html+=`<div class="det-section"><div class="det-label"><span class="material-icons-round">notes</span>විස්තරය</div><div class="det-desc">"${escHtml(r.description)}"</div></div>`;
+
+    // Images
+    const imgs=(r.images||[]).filter(Boolean);
+    if(imgs.length){
+        html+=`<div class="det-section"><div class="det-label"><span class="material-icons-round">photo_library</span>ඡායාරූප (${imgs.length})</div><div class="det-img-grid">${imgs.map(i=>`<img src="${i}" class="det-img" alt="">`).join('')}</div></div>`;
+    }
+
+    // Actions
+    html+=`<div class="det-section"><div class="det-actions">`;
+    html+=`<button class="btn btn-o" id="detPdf"><span class="material-icons-round">download</span>PDF</button>`;
+    html+=`<button class="btn btn-d" id="detDel"><span class="material-icons-round">delete</span>මකන්න</button>`;
+    html+=`</div></div>`;
+
+    $('detBody').innerHTML=html;
+
+    // Map
+    if(r.lat&&r.lng){
+        setTimeout(()=>{
+            if(detMap){detMap.remove();detMap=null}
+            const mc=document.getElementById('detMapC');
+            if(mc){
+                detMap=L.map(mc,{zoomControl:false,attributionControl:false,dragging:false,scrollWheelZoom:false}).setView([r.lat,r.lng],13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(detMap);
+                const color=isSight?'#1565C0':'#C62828';
+                L.marker([r.lat,r.lng],{icon:L.divIcon({className:'',html:`<div style="width:14px;height:14px;background:${color};border-radius:50%;border:3px solid #FFF;box-shadow:0 1px 3px rgba(0,0,0,.3)"></div>`,iconSize:[14,14],iconAnchor:[7,7]})}).addTo(detMap);
+            }
+        },200);
+    }
+
+    // Image viewer
+    setTimeout(()=>{
+        document.querySelectorAll('.det-img').forEach(img=>{img.onclick=()=>{$('imgVwSrc').src=img.src;$('imgVw').classList.add('show')}});
+        document.getElementById('detPdf')?.addEventListener('click',()=>generatePdf(r));
+        document.getElementById('detDel')?.addEventListener('click',()=>{deleteId=r._id;H('detScrim');S('delScrim')});
+    },100);
+
+    S('detScrim');
+}
+$('detClose').onclick=()=>{H('detScrim');if(detMap){detMap.remove();detMap=null}};
+function escHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+// IMAGE VIEWER
+$('imgVwClose').onclick=()=>$('imgVw').classList.remove('show');
+$('imgVw').onclick=e=>{if(e.target===$('imgVw'))$('imgVw').classList.remove('show')};
+
+// DELETE
+$('delCancel').onclick=()=>{deleteId=null;H('delScrim')};
+$('delConfirm').onclick=async()=>{
+    if(!deleteId)return;H('delScrim');
+    $('pl').classList.add('show');
+    try{
+        await remove(ref(db,'reports/'+deleteId));
+        snk('වාර්තාව මකා දමන ලදී');
+        await loadReports();renderList();
+    }catch(e){snk('මකා දැමීම අසාර්ථකයි');console.error(e)}
+    deleteId=null;$('pl').classList.remove('show');
+};
+
+// PDF
+async function generatePdf(r){
+    const{jsPDF}=window.jspdf;
+    const doc=new jsPDF('p','mm','a4');
+    const W=210,M=15;let Y=M;
+    const isSight=r.type==='sighting';
+
+    doc.setFillColor(27,94,32);doc.rect(0,0,W,28,'F');
+    doc.setTextColor(255,255,255);doc.setFontSize(16);
+    doc.text('EMA - Elephant Monitoring App',W/2,12,{align:'center'});
+    doc.setFontSize(9);doc.text('My Report',W/2,20,{align:'center'});
+    Y=36;
+
+    doc.setTextColor(33,33,33);
+
+    // Type
+    doc.setFontSize(7);doc.setTextColor(117,117,117);doc.text('REPORT TYPE',M,Y);Y+=4;
+    doc.setFontSize(12);doc.setTextColor(33,33,33);doc.text(isSight?'Elephant Sighting':'Elephant Accident',M,Y);Y+=7;
+
+    if(isSight){
+        doc.setFontSize(7);doc.setTextColor(117,117,117);doc.text('COUNT & TYPE',M,Y);Y+=4;
+        doc.setFontSize(12);doc.setTextColor(27,94,32);doc.text(`${r.count||1} ${r.elType==='tusker'?'Tusker(s)':'Elephant(s)'}`,M,Y);Y+=7;
+    }else{
+        doc.setFontSize(7);doc.setTextColor(117,117,117);doc.text('INJURIES / DEATHS',M,Y);Y+=4;
+        doc.setFontSize(11);doc.setTextColor(33,33,33);doc.text(`Injuries: ${r.injury||0}  |  Deaths: ${r.death||0}`,M,Y);Y+=5;
+        if(r.emergency){doc.setTextColor(186,26,26);doc.setFontSize(8);doc.text('EMERGENCY HELP NEEDED',M,Y);Y+=4}
+        Y+=3;
+    }
+
+    doc.setFontSize(7);doc.setTextColor(117,117,117);doc.text('DISTRICT',M,Y);Y+=4;
+    doc.setFontSize(10);doc.setTextColor(33,33,33);doc.text(`${r.district||''} (${r.districtEn||''})`,M,Y);Y+=7;
+
+    doc.setFontSize(7);doc.setTextColor(117,117,117);doc.text('DATE & TIME',M,Y);Y+=4;
+    doc.setFontSize(9);doc.setTextColor(33,33,33);doc.text(timeStr(r.timestamp),M,Y);Y+=7;
+
+    if(r.lat&&r.lng){
+        doc.setFontSize(7);doc.setTextColor(117,117,117);doc.text('COORDINATES',M,Y);Y+=4;
+        doc.setFontSize(9);doc.setTextColor(33,33,33);doc.text(`${r.lat.toFixed(6)}, ${r.lng.toFixed(6)}`,M,Y);Y+=7;
+    }
+
+    if(r.description){
+        doc.setFontSize(7);doc.setTextColor(117,117,117);doc.text('DESCRIPTION',M,Y);Y+=4;
+        doc.setFontSize(9);doc.setTextColor(33,33,33);
+        const lines=doc.splitTextToSize(r.description,W-2*M);doc.text(lines,M,Y);Y+=lines.length*4+5;
+    }
+
+    doc.setFontSize(7);doc.setTextColor(117,117,117);doc.text('REPORTER',M,Y);Y+=4;
+    doc.setFontSize(9);doc.setTextColor(33,33,33);doc.text(`${r.reporterName||''} (${r.reporterEmaId||''})`,M,Y);Y+=4;
+    doc.text(`Phone: ${r.reporterPhone||''}`,M,Y);Y+=5;
+
+    const imgs=(r.images||[]).filter(Boolean);
+    if(imgs.length){
+        Y+=3;doc.setFontSize(7);doc.setTextColor(117,117,117);doc.text(`IMAGES (${imgs.length})`,M,Y);Y+=4;
+        for(let i=0;i<Math.min(imgs.length,2);i++){
+            if(Y>230){doc.addPage();Y=M}
+            try{doc.addImage(imgs[i],'JPEG',M,Y,75,56);Y+=60}catch(e){}
+        }
+    }
+
+    doc.setFillColor(27,94,32);doc.rect(0,287,W,10,'F');
+    doc.setTextColor(255,255,255);doc.setFontSize(7);
+    doc.text('EMA | Generated: '+new Date().toLocaleString(),W/2,292,{align:'center'});
+
+    doc.save(`EMA_MyReport_${r._id||'report'}.pdf`);
+    snk('PDF බාගත විය');
+}
+
+init();
+</script>
+</body>
+</html>

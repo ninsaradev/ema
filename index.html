@@ -1,0 +1,1716 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EMA - අලි නිරීක්ෂණ යෙදුම</title>
+
+    <!-- Google Fonts: Noto Sans Sinhala + Roboto -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined|Material+Icons+Round" rel="stylesheet">
+
+    <!-- QR Code Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --md-primary: #1B5E20;
+            --md-on-primary: #FFFFFF;
+            --md-primary-container: #A5D6A7;
+            --md-on-primary-container: #0A3A0A;
+            --md-secondary: #4E6352;
+            --md-on-secondary: #FFFFFF;
+            --md-secondary-container: #D0E8D2;
+            --md-on-secondary-container: #0C1F12;
+            --md-tertiary: #3A6374;
+            --md-surface: #F8FAF6;
+            --md-surface-dim: #D8DBD5;
+            --md-surface-bright: #F8FAF6;
+            --md-surface-container-lowest: #FFFFFF;
+            --md-surface-container-low: #F2F5EF;
+            --md-surface-container: #ECF0EA;
+            --md-surface-container-high: #E7EAE4;
+            --md-surface-container-highest: #E1E4DE;
+            --md-on-surface: #191D19;
+            --md-on-surface-variant: #414942;
+            --md-outline: #727970;
+            --md-outline-variant: #C1C9BF;
+            --md-error: #BA1A1A;
+            --md-on-error: #FFFFFF;
+            --md-error-container: #FFDAD6;
+            --md-elevation-1: 0 1px 3px 1px rgba(0,0,0,0.08), 0 1px 2px 0 rgba(0,0,0,0.12);
+            --md-elevation-2: 0 2px 6px 2px rgba(0,0,0,0.08), 0 1px 2px 0 rgba(0,0,0,0.12);
+            --md-elevation-3: 0 4px 8px 3px rgba(0,0,0,0.08), 0 1px 3px 0 rgba(0,0,0,0.12);
+            --md-shape-sm: 8px;
+            --md-shape-md: 12px;
+            --md-shape-lg: 16px;
+            --md-shape-xl: 28px;
+            --md-shape-full: 9999px;
+        }
+
+        body {
+            font-family: 'Noto Sans Sinhala', 'Roboto', sans-serif;
+            background: var(--md-surface);
+            color: var(--md-on-surface);
+            overflow-x: hidden;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ============ SCREENS ============ */
+        .screen {
+            display: none;
+            min-height: 100vh;
+            width: 100%;
+        }
+        .screen.active {
+            display: flex;
+        }
+        .hidden { display: none !important; }
+
+        /* ============ SPLASH ============ */
+        #splashScreen {
+            justify-content: center;
+            align-items: center;
+            background: var(--md-surface-container-lowest);
+            flex-direction: column;
+        }
+        .splash-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 48px;
+        }
+        .splash-logo {
+            width: 140px;
+            height: 140px;
+            object-fit: contain;
+        }
+        .loader-track {
+            width: 240px;
+            height: 4px;
+            background: var(--md-surface-container-highest);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .loader-indicator {
+            width: 0%;
+            height: 100%;
+            background: var(--md-primary);
+            border-radius: 2px;
+            transition: width 0.15s linear;
+        }
+
+        /* ============ LOGIN ============ */
+        #loginScreen {
+            justify-content: center;
+            align-items: center;
+            background: var(--md-surface);
+            padding: 24px;
+        }
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .login-logo {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            margin-bottom: 12px;
+        }
+        .app-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--md-primary);
+            letter-spacing: 6px;
+        }
+        .app-subtitle {
+            font-size: 14px;
+            color: var(--md-on-surface-variant);
+            margin-top: 2px;
+        }
+        .app-subtitle-si {
+            font-size: 13px;
+            color: var(--md-on-surface-variant);
+            margin-bottom: 36px;
+        }
+        .login-form {
+            width: 100%;
+        }
+
+        /* ============ MD3 INPUT ============ */
+        .md-input-field {
+            position: relative;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .md-input-field input {
+            width: 100%;
+            padding: 20px 16px 8px 16px;
+            border: 1px solid var(--md-outline);
+            border-radius: var(--md-shape-sm);
+            font-size: 16px;
+            font-family: inherit;
+            background: transparent;
+            color: var(--md-on-surface);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .md-input-field input:focus {
+            border-color: var(--md-primary);
+            border-width: 2px;
+            padding: 19px 15px 7px 15px;
+        }
+        .md-input-field label {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+            color: var(--md-on-surface-variant);
+            pointer-events: none;
+            transition: all 0.2s;
+            background: var(--md-surface);
+            padding: 0 4px;
+        }
+        .md-input-field input:focus + label,
+        .md-input-field input:not(:placeholder-shown) + label {
+            top: 0;
+            font-size: 12px;
+            color: var(--md-primary);
+        }
+
+        /* Phone input */
+        .md-phone-field {
+            position: relative;
+            margin-bottom: 20px;
+            width: 100%;
+            display: flex;
+            border: 1px solid var(--md-outline);
+            border-radius: var(--md-shape-sm);
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+        .md-phone-field:focus-within {
+            border-color: var(--md-primary);
+            border-width: 2px;
+        }
+        .md-phone-prefix {
+            padding: 16px 12px;
+            background: var(--md-surface-container);
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--md-on-surface);
+            display: flex;
+            align-items: center;
+            border-right: 1px solid var(--md-outline-variant);
+            white-space: nowrap;
+        }
+        .md-phone-field input {
+            flex: 1;
+            padding: 16px 12px;
+            border: none;
+            font-size: 16px;
+            font-family: inherit;
+            background: transparent;
+            color: var(--md-on-surface);
+            outline: none;
+        }
+
+        /* ============ MD3 BUTTONS ============ */
+        .md-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: var(--md-shape-full);
+            font-size: 14px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.5px;
+            min-height: 48px;
+            width: 100%;
+            text-align: center;
+        }
+        .md-btn .material-icons-round {
+            font-size: 20px;
+        }
+        .md-btn-filled {
+            background: var(--md-primary);
+            color: var(--md-on-primary);
+        }
+        .md-btn-filled:hover {
+            box-shadow: var(--md-elevation-1);
+        }
+        .md-btn-filled:active {
+            transform: scale(0.98);
+        }
+        .md-btn-outlined {
+            background: transparent;
+            color: var(--md-primary);
+            border: 1px solid var(--md-outline);
+        }
+        .md-btn-outlined:hover {
+            background: rgba(27,94,32,0.08);
+        }
+        .md-btn-tonal {
+            background: var(--md-secondary-container);
+            color: var(--md-on-secondary-container);
+        }
+        .md-btn-tonal:hover {
+            box-shadow: var(--md-elevation-1);
+        }
+        .md-btn-text {
+            background: transparent;
+            color: var(--md-primary);
+            padding: 10px 12px;
+            min-height: auto;
+            width: auto;
+        }
+        .md-btn-text:hover {
+            background: rgba(27,94,32,0.08);
+            border-radius: var(--md-shape-sm);
+        }
+
+        .login-actions {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .md-divider {
+            display: flex;
+            align-items: center;
+            margin: 24px 0;
+            gap: 16px;
+        }
+        .md-divider::before,
+        .md-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--md-outline-variant);
+        }
+        .md-divider span {
+            font-size: 12px;
+            color: var(--md-on-surface-variant);
+            letter-spacing: 0.5px;
+        }
+
+        /* ============ SIGNUP ============ */
+        #signUpScreen {
+            flex-direction: column;
+            background: var(--md-surface);
+        }
+        .signup-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 16px 20px;
+        }
+        .signup-top-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+            margin-bottom: 8px;
+        }
+        .md-icon-btn {
+            width: 48px;
+            height: 48px;
+            border: none;
+            background: transparent;
+            border-radius: var(--md-shape-full);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--md-on-surface);
+            transition: background 0.2s;
+        }
+        .md-icon-btn:hover {
+            background: var(--md-surface-container-high);
+        }
+        .signup-top-bar h2 {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--md-on-surface);
+        }
+
+        /* Stepper */
+        .md-stepper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin: 16px 0 24px;
+        }
+        .step-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--md-outline-variant);
+            transition: all 0.3s;
+        }
+        .step-dot.active {
+            width: 24px;
+            border-radius: 4px;
+            background: var(--md-primary);
+        }
+        .step-dot.done {
+            background: var(--md-primary-container);
+        }
+
+        .step-connector {
+            width: 24px;
+            height: 2px;
+            background: var(--md-outline-variant);
+        }
+        .step-connector.done {
+            background: var(--md-primary-container);
+        }
+
+        /* Carousel */
+        .carousel-wrapper {
+            flex: 1;
+            overflow: hidden;
+        }
+        .carousel-slide {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 0;
+        }
+        .carousel-slide.active {
+            display: flex;
+        }
+        .step-header-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--md-primary-container);
+            border-radius: var(--md-shape-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+        .step-header-icon .material-icons-round {
+            font-size: 32px;
+            color: var(--md-on-primary-container);
+        }
+        .slide-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--md-on-surface);
+            margin-bottom: 4px;
+            text-align: center;
+        }
+        .slide-subtitle {
+            font-size: 13px;
+            color: var(--md-on-surface-variant);
+            margin-bottom: 28px;
+            text-align: center;
+        }
+        .slide-form {
+            width: 100%;
+        }
+        .slide-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 28px;
+            width: 100%;
+        }
+        .slide-buttons .md-btn {
+            flex: 1;
+        }
+
+        /* Profile upload */
+        .profile-upload-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+        .profile-avatar-placeholder {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 2px dashed var(--md-outline-variant);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--md-surface-container);
+            cursor: pointer;
+            transition: border-color 0.2s;
+            overflow: hidden;
+        }
+        .profile-avatar-placeholder:hover {
+            border-color: var(--md-primary);
+        }
+        .profile-avatar-placeholder .material-icons-round {
+            font-size: 48px;
+            color: var(--md-outline);
+        }
+        .profile-avatar-placeholder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* ============ POPUPS / DIALOGS ============ */
+        .md-dialog-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.32);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 24px;
+        }
+        .md-dialog-overlay.show {
+            display: flex;
+        }
+        .md-dialog {
+            background: var(--md-surface-container-lowest);
+            border-radius: var(--md-shape-xl);
+            padding: 24px;
+            width: 100%;
+            max-width: 440px;
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .md-dialog-full {
+            max-width: 520px;
+            max-height: 95vh;
+        }
+        .md-dialog-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .md-dialog-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--md-on-surface);
+            line-height: 1.4;
+            flex: 1;
+            padding-right: 8px;
+        }
+        .md-dialog-body p {
+            font-size: 14px;
+            color: var(--md-on-surface-variant);
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+        .md-dialog-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 20px;
+        }
+        .md-dialog-actions .md-btn {
+            width: auto;
+            min-width: 80px;
+        }
+
+        /* OTP */
+        .otp-container {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 24px 0;
+        }
+        .otp-input {
+            width: 56px;
+            height: 56px;
+            border: 1px solid var(--md-outline);
+            border-radius: var(--md-shape-sm);
+            text-align: center;
+            font-size: 24px;
+            font-weight: 600;
+            font-family: 'Roboto', sans-serif;
+            color: var(--md-on-surface);
+            background: transparent;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .otp-input:focus {
+            border-color: var(--md-primary);
+            border-width: 2px;
+        }
+
+        /* Found ID */
+        .ema-id-card {
+            background: var(--md-surface-container);
+            border-radius: var(--md-shape-lg);
+            padding: 24px;
+            text-align: center;
+            margin: 16px 0;
+        }
+        .ema-id-card .label {
+            font-size: 12px;
+            color: var(--md-on-surface-variant);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .ema-id-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--md-primary);
+            letter-spacing: 4px;
+            font-family: 'Roboto', monospace;
+        }
+
+        /* Error chip */
+        .md-error-chip {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            background: var(--md-error-container);
+            color: var(--md-error);
+            padding: 10px 16px;
+            border-radius: var(--md-shape-sm);
+            font-size: 13px;
+            margin-top: 12px;
+        }
+        .md-error-chip.show {
+            display: flex;
+        }
+
+        /* Spinner */
+        .md-spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid var(--md-surface-container-highest);
+            border-top-color: var(--md-primary);
+            border-radius: 50%;
+            animation: md-spin 0.8s linear infinite;
+        }
+        .md-spinner.lg {
+            width: 48px;
+            height: 48px;
+            border-width: 4px;
+        }
+        @keyframes md-spin {
+            to { transform: rotate(360deg); }
+        }
+        .loading-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+        }
+
+        /* Scanner */
+        .scanner-viewport {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: var(--md-shape-lg);
+            overflow: hidden;
+            margin: 16px 0;
+        }
+        #scannerVideo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .scanner-guide {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .scanner-rect {
+            width: 75%;
+            aspect-ratio: 16/9;
+            border: 2px solid rgba(255,255,255,0.6);
+            border-radius: var(--md-shape-md);
+            position: relative;
+        }
+        .scanner-corner {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border-color: var(--md-primary-container);
+            border-style: solid;
+        }
+        .scanner-corner.tl { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-radius: 6px 0 0 0; }
+        .scanner-corner.tr { top: -2px; right: -2px; border-width: 3px 3px 0 0; border-radius: 0 6px 0 0; }
+        .scanner-corner.bl { bottom: -2px; left: -2px; border-width: 0 0 3px 3px; border-radius: 0 0 0 6px; }
+        .scanner-corner.br { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-radius: 0 0 6px 0; }
+
+        .scanner-label {
+            font-size: 13px;
+            color: var(--md-on-surface-variant);
+            text-align: center;
+            margin-top: 4px;
+        }
+
+        /* Success dialog */
+        .success-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .success-icon-circle {
+            width: 72px;
+            height: 72px;
+            background: var(--md-primary-container);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+        .success-icon-circle .material-icons-round {
+            font-size: 36px;
+            color: var(--md-on-primary-container);
+        }
+        .remember-note {
+            font-size: 13px;
+            color: var(--md-on-surface-variant);
+            text-align: center;
+            line-height: 1.6;
+            margin-top: 8px;
+        }
+        .card-download-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--md-primary);
+            margin: 16px 0;
+        }
+
+        /* MD3 Snackbar / Toast */
+        .md-snackbar {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--md-on-surface);
+            color: var(--md-surface);
+            padding: 14px 20px;
+            border-radius: var(--md-shape-sm);
+            font-size: 14px;
+            z-index: 3000;
+            transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1);
+            max-width: 90%;
+            font-family: inherit;
+        }
+        .md-snackbar.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ============ RESPONSIVE ============ */
+        @media (max-width: 420px) {
+            .otp-input {
+                width: 48px;
+                height: 48px;
+                font-size: 20px;
+            }
+            .ema-id-value {
+                font-size: 24px;
+                letter-spacing: 2px;
+            }
+        }
+
+        /* Hidden helpers */
+        #idCardCanvas, #qrCodeContainer {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============ SPLASH SCREEN ============ -->
+    <div id="splashScreen" class="screen active">
+        <div class="splash-container">
+            <img src="assets/splash.png" alt="EMA" class="splash-logo">
+            <div class="loader-track">
+                <div class="loader-indicator" id="loaderFill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ LOGIN SCREEN ============ -->
+    <div id="loginScreen" class="screen">
+        <div class="login-container">
+            <img src="assets/splash.png" alt="EMA" class="login-logo">
+            <h1 class="app-title"></h1>
+            <p class="app-subtitle">Elephant Monitoring App</p>
+            <p class="app-subtitle-si">අලි නිරීක්ෂණ යෙදුම</p>
+
+            <div class="login-form">
+                <div class="md-input-field">
+                    <input type="text" id="emaIdInput" placeholder=" " autocomplete="off">
+                    <label>EMA හැඳුනුම්පත් අංකය</label>
+                </div>
+
+                <button class="md-btn md-btn-filled" id="loginBtn">
+                    <span class="material-icons-round">login</span>
+                    පුරනය වන්න
+                </button>
+
+                <div class="login-actions">
+                    <button class="md-btn md-btn-text" id="forgotIdBtn">
+                        <span class="material-icons-round">help_outline</span>
+                        අංකය අමතකද?
+                    </button>
+                    <button class="md-btn md-btn-text" id="eCardBtn">
+                        <span class="material-icons-round">qr_code_scanner</span>
+                        E-Card ස්කෑන් කරන්න
+                    </button>
+                </div>
+
+                <div class="md-divider"><span>හෝ</span></div>
+
+                <button class="md-btn md-btn-tonal" id="signUpBtn">
+                    <span class="material-icons-round">person_add</span>
+                    නව ගිණුමක් සාදන්න
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ SIGN UP SCREEN ============ -->
+    <div id="signUpScreen" class="screen">
+        <div class="signup-container">
+            <div class="signup-top-bar">
+                <button class="md-icon-btn" id="backToLogin">
+                    <span class="material-icons-round">arrow_back</span>
+                </button>
+                <h2>ලියාපදිංචි වන්න</h2>
+            </div>
+
+            <div class="md-stepper" id="stepper">
+                <div class="step-dot active" data-s="0"></div>
+                <div class="step-connector" data-c="0"></div>
+                <div class="step-dot" data-s="1"></div>
+                <div class="step-connector" data-c="1"></div>
+                <div class="step-dot" data-s="2"></div>
+                <div class="step-connector" data-c="2"></div>
+                <div class="step-dot" data-s="3"></div>
+            </div>
+
+            <div class="carousel-wrapper">
+                <!-- Step 0: Name -->
+                <div class="carousel-slide active" data-step="0">
+                    <div class="step-header-icon">
+                        <span class="material-icons-round">person</span>
+                    </div>
+                    <h3 class="slide-title">සම්පූර්ණ නම</h3>
+                    <p class="slide-subtitle">ඔබගේ සම්පූර්ණ නම ඇතුළත් කරන්න</p>
+                    <div class="slide-form">
+                        <div class="md-input-field">
+                            <input type="text" id="fullName" placeholder=" ">
+                            <label>සම්පූර්ණ නම</label>
+                        </div>
+                    </div>
+                    <div class="slide-buttons">
+                        <button class="md-btn md-btn-filled btn-next" data-next="1">
+                            ඊළඟ පියවර
+                            <span class="material-icons-round">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 1: Photo -->
+                <div class="carousel-slide" data-step="1">
+                    <div class="step-header-icon">
+                        <span class="material-icons-round">photo_camera</span>
+                    </div>
+                    <h3 class="slide-title">පැතිකඩ ඡායාරූපය</h3>
+                    <p class="slide-subtitle">ඔබගේ ඡායාරූපයක් තෝරන්න</p>
+                    <div class="profile-upload-area">
+                        <div class="profile-avatar-placeholder" id="profilePreview">
+                            <span class="material-icons-round">add_a_photo</span>
+                        </div>
+                        <input type="file" id="profilePicInput" accept="image/*" hidden>
+                        <button class="md-btn md-btn-outlined" id="uploadPicBtn" style="width:auto">
+                            <span class="material-icons-round">upload</span>
+                            ඡායාරූපය තෝරන්න
+                        </button>
+                    </div>
+                    <div class="slide-buttons">
+                        <button class="md-btn md-btn-outlined btn-prev" data-prev="0">
+                            <span class="material-icons-round">arrow_back</span>
+                            ආපසු
+                        </button>
+                        <button class="md-btn md-btn-filled btn-next" data-next="2">
+                            ඊළඟ පියවර
+                            <span class="material-icons-round">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Phone -->
+                <div class="carousel-slide" data-step="2">
+                    <div class="step-header-icon">
+                        <span class="material-icons-round">phone_android</span>
+                    </div>
+                    <h3 class="slide-title">දුරකථන අංකය</h3>
+                    <p class="slide-subtitle">ඔබගේ ජංගම දුරකථන අංකය ඇතුළත් කරන්න</p>
+                    <div class="slide-form">
+                        <div class="md-phone-field">
+                            <span class="md-phone-prefix">+94</span>
+                            <input type="tel" id="phoneNumber" placeholder="7X XXX XXXX" maxlength="10">
+                        </div>
+                    </div>
+                    <div class="slide-buttons">
+                        <button class="md-btn md-btn-outlined btn-prev" data-prev="1">
+                            <span class="material-icons-round">arrow_back</span>
+                            ආපසු
+                        </button>
+                        <button class="md-btn md-btn-filled btn-next" data-next="3">
+                            ඊළඟ පියවර
+                            <span class="material-icons-round">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Email -->
+                <div class="carousel-slide" data-step="3">
+                    <div class="step-header-icon">
+                        <span class="material-icons-round">email</span>
+                    </div>
+                    <h3 class="slide-title">විද්‍යුත් තැපැල් ලිපිනය</h3>
+                    <p class="slide-subtitle">විකල්පමය - ඇතුළත් කිරීම අනිවාර්ය නොවේ</p>
+                    <div class="slide-form">
+                        <div class="md-input-field">
+                            <input type="email" id="emailAddress" placeholder=" ">
+                            <label>විද්‍යුත් තැපෑල (විකල්පමය)</label>
+                        </div>
+                    </div>
+                    <div class="slide-buttons">
+                        <button class="md-btn md-btn-outlined btn-prev" data-prev="2">
+                            <span class="material-icons-round">arrow_back</span>
+                            ආපසු
+                        </button>
+                        <button class="md-btn md-btn-filled" id="submitSignUp">
+                            <span class="material-icons-round">check_circle</span>
+                            ඉදිරිපත් කරන්න
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ FORGOT ID DIALOG ============ -->
+    <div id="forgotDialog" class="md-dialog-overlay">
+        <div class="md-dialog">
+            <div class="md-dialog-header">
+                <h3>හැඳුනුම්පත් අංකය සොයන්න</h3>
+                <button class="md-icon-btn" id="closeForgotDialog">
+                    <span class="material-icons-round">close</span>
+                </button>
+            </div>
+
+            <div id="forgotStep1">
+                <div class="md-dialog-body">
+                    <p>ඔබ EMA තුළ ලියාපදිංචි වීමේදී භාවිතා කළ දුරකථන අංකය ඇතුළත් කරන්න.</p>
+                </div>
+                <div class="md-phone-field" style="margin-top:16px">
+                    <span class="md-phone-prefix">+94</span>
+                    <input type="tel" id="forgotPhone" placeholder="7X XXX XXXX" maxlength="10">
+                </div>
+                <div class="md-dialog-actions" style="margin-top:20px">
+                    <button class="md-btn md-btn-filled" id="sendOtpBtn" style="width:auto">
+                        <span class="material-icons-round">send</span>
+                        OTP යවන්න
+                    </button>
+                </div>
+            </div>
+
+            <div id="forgotStep2" class="hidden">
+                <div class="md-dialog-body">
+                    <p>ඔබගේ දුරකථනයට තහවුරු කිරීමේ කේතයක් යවන ලදී. එය පහතින් ඇතුළත් කරන්න.</p>
+                </div>
+                <div class="otp-container">
+                    <input type="text" class="otp-input" maxlength="1" data-idx="0" inputmode="numeric">
+                    <input type="text" class="otp-input" maxlength="1" data-idx="1" inputmode="numeric">
+                    <input type="text" class="otp-input" maxlength="1" data-idx="2" inputmode="numeric">
+                    <input type="text" class="otp-input" maxlength="1" data-idx="3" inputmode="numeric">
+                </div>
+                <div class="md-dialog-actions">
+                    <button class="md-btn md-btn-filled" id="verifyOtpBtn" style="width:auto">
+                        <span class="material-icons-round">verified</span>
+                        තහවුරු කරන්න
+                    </button>
+                </div>
+            </div>
+
+            <div id="forgotStep3" class="hidden">
+                <div class="ema-id-card">
+                    <div class="label">ඔබගේ EMA හැඳුනුම්පත් අංකය</div>
+                    <div class="ema-id-value" id="foundEmaId"></div>
+                </div>
+                <div class="md-dialog-actions">
+                    <button class="md-btn md-btn-filled" id="useFoundId" style="width:auto">
+                        <span class="material-icons-round">login</span>
+                        මෙම අංකයෙන් පුරනය වන්න
+                    </button>
+                </div>
+            </div>
+
+            <div id="forgotError" class="md-error-chip">
+                <span class="material-icons-round" style="font-size:18px">error</span>
+                <span id="forgotErrorText"></span>
+            </div>
+
+            <div id="forgotLoading" class="hidden">
+                <div class="loading-content">
+                    <div class="md-spinner"></div>
+                    <p style="font-size:13px;color:var(--md-on-surface-variant)">සොයමින් පවතී...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ E-CARD SCANNER DIALOG ============ -->
+    <div id="eCardDialog" class="md-dialog-overlay">
+        <div class="md-dialog md-dialog-full">
+            <div class="md-dialog-header">
+                <h3>E-Card ස්කෑන් කරන්න</h3>
+                <button class="md-icon-btn" id="closeECardDialog">
+                    <span class="material-icons-round">close</span>
+                </button>
+            </div>
+            <div class="md-dialog-body">
+                <p>ඔබගේ EMA E-Card එක කැමරාව ඉදිරියේ තබා QR කේතය ස්කෑන් කරන්න.</p>
+            </div>
+            <div class="scanner-viewport">
+                <video id="scannerVideo" autoplay playsinline></video>
+                <canvas id="scannerCanvas" hidden></canvas>
+                <div class="scanner-guide">
+                    <div class="scanner-rect">
+                        <div class="scanner-corner tl"></div>
+                        <div class="scanner-corner tr"></div>
+                        <div class="scanner-corner bl"></div>
+                        <div class="scanner-corner br"></div>
+                    </div>
+                </div>
+            </div>
+            <p class="scanner-label">QR කේතය හඳුනා ගන්නා තෙක් ස්ථාවරව තබා ගන්න</p>
+        </div>
+    </div>
+
+    <!-- ============ SUCCESS DIALOG ============ -->
+    <div id="successDialog" class="md-dialog-overlay">
+        <div class="md-dialog">
+            <div class="success-header">
+                <div class="success-icon-circle">
+                    <span class="material-icons-round">check</span>
+                </div>
+                <h3 style="text-align:center;font-size:20px">සාර්ථකව ලියාපදිංචි විය</h3>
+                <p style="font-size:14px;color:var(--md-on-surface-variant);text-align:center">
+                    ඔබගේ ගිණුම සාර්ථකව සාදන ලදී
+                </p>
+            </div>
+
+            <div class="ema-id-card">
+                <div class="label">ඔබගේ EMA හැඳුනුම්පත් අංකය</div>
+                <div class="ema-id-value" id="newEmaId"></div>
+            </div>
+
+            <p class="remember-note">
+                ඔබගේ ඊළඟ පුරනය සඳහා මෙම අංකය ආරක්ෂිතව සටහන් කර තබා ගන්න.
+                <br>
+                <small style="color:var(--md-outline)">Remember this ID for your next login.</small>
+            </p>
+
+            <div class="card-download-status" id="cardDownloadStatus">
+                <div class="md-spinner" style="width:20px;height:20px;border-width:2px"></div>
+                E-Card සකසමින් පවතී...
+            </div>
+
+            <div class="md-dialog-actions">
+                <button class="md-btn md-btn-filled hidden" id="doneBtn" style="width:auto">
+                    <span class="material-icons-round">done_all</span>
+                    අවසන් කරන්න
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ LOADING OVERLAY ============ -->
+    <div id="loadingOverlay" class="md-dialog-overlay hidden">
+        <div class="md-dialog" style="max-width:280px">
+            <div class="loading-content">
+                <div class="md-spinner lg"></div>
+                <p style="font-size:14px;color:var(--md-on-surface-variant)">කරුණාකර රැඳී සිටින්න...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden helpers -->
+    <canvas id="idCardCanvas" width="1920" height="1080"></canvas>
+    <div id="qrCodeContainer"></div>
+
+    <!-- ============ FIREBASE + APP SCRIPT ============ -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+        import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxhaRpjccuhoKE3T8WYRihy1rDXtRhGO4",
+            authDomain: "ema-4-b10bd.firebaseapp.com",
+            databaseURL: "https://ema-4-b10bd-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "ema-4-b10bd",
+            storageBucket: "ema-4-b10bd.firebasestorage.app",
+            messagingSenderId: "149141817573",
+            appId: "1:149141817573:web:409bfb4d9c2b84cf742c0c",
+            measurementId: "G-6NL4MPKC45"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // ============ CONFIG ============
+        const SMS_CONFIG = {
+            bearer: '2978|LJtLlcBp7kBtuwPflj9rgkFSB4nb9FQIVMgNhOU918611bc8',
+            senderId: 'TextLKDemo'
+        };
+
+        // ============ STATE ============
+        let currentStep = 0;
+        let profilePicBase64 = null;
+        let currentOtp = null;
+        let foundUserData = null;
+        let scannerStream = null;
+        let scannerInterval = null;
+
+        // ============ HELPERS ============
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+        function showDialog(id) { document.getElementById(id).classList.add('show'); }
+        function hideDialog(id) { document.getElementById(id).classList.remove('show'); }
+        function showLoading() {
+            const el = document.getElementById('loadingOverlay');
+            el.classList.remove('hidden');
+            el.classList.add('show');
+        }
+        function hideLoading() {
+            const el = document.getElementById('loadingOverlay');
+            el.classList.remove('show');
+            el.classList.add('hidden');
+        }
+
+        function showSnackbar(msg) {
+            let sb = document.querySelector('.md-snackbar');
+            if (!sb) {
+                sb = document.createElement('div');
+                sb.className = 'md-snackbar';
+                document.body.appendChild(sb);
+            }
+            sb.textContent = msg;
+            sb.classList.add('show');
+            setTimeout(() => sb.classList.remove('show'), 3500);
+        }
+
+        function generateEmaId() {
+            const digits = Math.floor(100000 + Math.random() * 900000).toString();
+            return digits + '-E';
+        }
+
+        function generateOtp() {
+            return Math.floor(1000 + Math.random() * 9000).toString();
+        }
+
+        async function compressImage(file, maxKB = 50) {
+            return new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let w = img.width, h = img.height;
+                        const max = 400;
+                        if (w > max || h > max) {
+                            const r = Math.min(max / w, max / h);
+                            w *= r; h *= r;
+                        }
+                        canvas.width = w;
+                        canvas.height = h;
+                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                        let q = 0.7;
+                        let result = canvas.toDataURL('image/jpeg', q);
+                        while (result.length > maxKB * 1024 * 1.37 && q > 0.1) {
+                            q -= 0.05;
+                            result = canvas.toDataURL('image/jpeg', q);
+                        }
+                        resolve(result);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function loadImg(src) {
+            return new Promise((res, rej) => {
+                const i = new Image();
+                i.onload = () => res(i);
+                i.onerror = rej;
+                i.src = src;
+            });
+        }
+
+        // ============ FIREBASE OPERATIONS ============
+        async function saveUser(emaId, data) {
+            const userRef = ref(db, 'users/' + emaId.replace('-', '_'));
+            await set(userRef, data);
+        }
+
+        async function loadUser(emaId) {
+            const snapshot = await get(child(ref(db), 'users/' + emaId.replace('-', '_')));
+            if (snapshot.exists()) return snapshot.val();
+            return null;
+        }
+
+        async function findUserByPhone(phone) {
+            const snapshot = await get(child(ref(db), 'users'));
+            if (!snapshot.exists()) return null;
+            const users = snapshot.val();
+            for (const key in users) {
+                if (users[key].phone === phone) return users[key];
+            }
+            return null;
+        }
+
+        // ============ SMS ============
+        async function sendSms(phone, message) {
+            let formatted = phone.replace(/\s/g, '');
+            if (formatted.startsWith('0')) formatted = '94' + formatted.substring(1);
+            else if (!formatted.startsWith('94')) formatted = '94' + formatted;
+
+            try {
+                await fetch('https://app.text.lk/api/v3/sms/send', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${SMS_CONFIG.bearer}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        recipient: formatted,
+                        sender_id: SMS_CONFIG.senderId,
+                        type: 'plain',
+                        message: message
+                    })
+                });
+            } catch (e) {
+                console.warn('SMS API call failed (CORS expected):', e);
+            }
+            return true;
+        }
+
+        // ============ ID CARD ============
+        async function generateIdCard(userData) {
+            const canvas = document.getElementById('idCardCanvas');
+            const ctx = canvas.getContext('2d');
+            const W = 1920, H = 1080;
+
+            // BG
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, W, H);
+
+            // Top bar
+            const grad = ctx.createLinearGradient(0, 0, W, 0);
+            grad.addColorStop(0, '#1B5E20');
+            grad.addColorStop(1, '#2E7D32');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, W, 160);
+
+            // Header text
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '600 48px Roboto, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('EMA \u2014 Elephant Monitoring App', W / 2, 68);
+            ctx.font = '400 28px Noto Sans Sinhala, sans-serif';
+            ctx.fillText('\u0D85\u0DBD\u0DD2 \u0DB1\u0DD2\u0DBB\u0DD3\u0D9A\u0DCA\u0DC2\u0DAB \u0DBA\u0DD9\u0DAF\u0DD4\u0DB8 \u2014 \u0DC4\u0DD0\u0DB3\u0DD4\u0DB1\u0DD4\u0DB8\u0DCA\u0DB4\u0DAD', W / 2, 120);
+
+            // Border
+            ctx.strokeStyle = '#E8F5E9';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(30, 180, W - 60, H - 200);
+
+            // Inner line
+            ctx.strokeStyle = '#C8E6C9';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(40, 190, W - 80, H - 220);
+
+            // Profile picture
+            const avatarCX = 280, avatarCY = 480, avatarR = 140;
+            if (userData.profilePic) {
+                try {
+                    const img = await loadImg(userData.profilePic);
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(avatarCX, avatarCY, avatarR, 0, Math.PI * 2);
+                    ctx.closePath();
+                    ctx.clip();
+                    ctx.drawImage(img, avatarCX - avatarR, avatarCY - avatarR, avatarR * 2, avatarR * 2);
+                    ctx.restore();
+                } catch (e) {}
+            }
+            ctx.beginPath();
+            ctx.arc(avatarCX, avatarCY, avatarR + 3, 0, Math.PI * 2);
+            ctx.strokeStyle = '#1B5E20';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Details
+            ctx.textAlign = 'left';
+            let dx = 500, dy = 300;
+
+            ctx.fillStyle = '#757575';
+            ctx.font = '400 22px Noto Sans Sinhala, sans-serif';
+            ctx.fillText('\u0DC3\u0DB8\u0DCA\u0DB4\u0DD6\u0DBB\u0DCA\u0DAB \u0DB1\u0DB8 / Full Name', dx, dy);
+            dy += 42;
+            ctx.fillStyle = '#212121';
+            ctx.font = '600 38px Noto Sans Sinhala, Roboto, sans-serif';
+            ctx.fillText(userData.fullName || 'N/A', dx, dy);
+
+            dy += 68;
+            ctx.fillStyle = '#757575';
+            ctx.font = '400 22px Noto Sans Sinhala, sans-serif';
+            ctx.fillText('EMA \u0DC4\u0DD0\u0DB3\u0DD4\u0DB1\u0DD4\u0DB8\u0DCA\u0DB4\u0DAD\u0DCA \u0D85\u0D82\u0D9A\u0DBA / EMA ID', dx, dy);
+            dy += 48;
+            ctx.fillStyle = '#1B5E20';
+            ctx.font = '700 50px Roboto, monospace';
+            ctx.fillText(userData.emaId || 'N/A', dx, dy);
+
+            dy += 68;
+            ctx.fillStyle = '#757575';
+            ctx.font = '400 22px Noto Sans Sinhala, sans-serif';
+            ctx.fillText('\u0DAF\u0DD4\u0DBB\u0D9A\u0DAE\u0DB1 \u0D85\u0D82\u0D9A\u0DBA / Phone', dx, dy);
+            dy += 42;
+            ctx.fillStyle = '#212121';
+            ctx.font = '500 34px Roboto, sans-serif';
+            ctx.fillText('+94 ' + (userData.phone || ''), dx, dy);
+
+            if (userData.email) {
+                dy += 64;
+                ctx.fillStyle = '#757575';
+                ctx.font = '400 22px Noto Sans Sinhala, sans-serif';
+                ctx.fillText('\u0DC0\u0DD2\u0DAF\u0DCA\u200D\u0DBA\u0DD4\u0DAD\u0DCA \u0DAD\u0DD0\u0DB4\u0DD0\u0DBD\u0DCA / Email', dx, dy);
+                dy += 42;
+                ctx.fillStyle = '#212121';
+                ctx.font = '500 30px Roboto, sans-serif';
+                ctx.fillText(userData.email, dx, dy);
+            }
+
+            // QR Code
+            const qrContainer = document.getElementById('qrCodeContainer');
+            qrContainer.innerHTML = '';
+            const qrDiv = document.createElement('div');
+            qrContainer.appendChild(qrDiv);
+            await new Promise(res => {
+                new QRCode(qrDiv, {
+                    text: userData.emaId,
+                    width: 220, height: 220,
+                    colorDark: '#1B5E20',
+                    colorLight: '#FFFFFF',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                setTimeout(res, 600);
+            });
+
+            const qrCanvas = qrDiv.querySelector('canvas');
+            if (qrCanvas) {
+                const qx = W - 330, qy = H - 370;
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(qx - 15, qy - 15, 260, 260);
+                ctx.strokeStyle = '#E8F5E9';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(qx - 15, qy - 15, 260, 260);
+                ctx.drawImage(qrCanvas, qx, qy, 230, 230);
+
+                ctx.fillStyle = '#757575';
+                ctx.font = '400 16px Roboto, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('QR Code', qx + 115, qy + 255);
+            }
+
+            // Footer
+            const fGrad = ctx.createLinearGradient(0, H - 50, W, H - 50);
+            fGrad.addColorStop(0, '#1B5E20');
+            fGrad.addColorStop(1, '#2E7D32');
+            ctx.fillStyle = fGrad;
+            ctx.fillRect(0, H - 50, W, 50);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.font = '400 18px Roboto, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('EMA \u2014 Elephant Monitoring App | Issued: ' + new Date().toLocaleDateString(), W / 2, H - 18);
+
+            return new Promise(resolve => {
+                canvas.toBlob(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `EMA_ECard_${userData.emaId}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    resolve();
+                }, 'image/png');
+            });
+        }
+
+        // ============ SCANNER ============
+        async function startScanner() {
+            const video = document.getElementById('scannerVideo');
+            const canvas = document.getElementById('scannerCanvas');
+            try {
+                scannerStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+                });
+                video.srcObject = scannerStream;
+                await video.play();
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                scannerInterval = setInterval(() => {
+                    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                        if (typeof jsQR !== 'undefined') {
+                            const code = jsQR(imageData.data, imageData.width, imageData.height);
+                            if (code && code.data && /^\d{6}-E$/.test(code.data.trim())) {
+                                stopScanner();
+                                hideDialog('eCardDialog');
+                                loginWithId(code.data.trim());
+                            }
+                        }
+                    }
+                }, 250);
+            } catch (e) {
+                showSnackbar('කැමරාව විවෘත කිරීමට නොහැකි විය');
+            }
+        }
+
+        function stopScanner() {
+            if (scannerInterval) { clearInterval(scannerInterval); scannerInterval = null; }
+            if (scannerStream) { scannerStream.getTracks().forEach(t => t.stop()); scannerStream = null; }
+        }
+
+        // ============ LOGIN ============
+        async function loginWithId(emaId) {
+            showLoading();
+            try {
+                const userData = await loadUser(emaId);
+                if (userData) {
+                    localStorage.setItem('ema_user', JSON.stringify(userData));
+                    localStorage.setItem('ema_id', emaId);
+                    hideLoading();
+                    window.location.href = 'main.html';
+                } else {
+                    hideLoading();
+                    showSnackbar('මෙම EMA හැඳුනුම්පත් අංකය සොයාගත නොහැක');
+                }
+            } catch (e) {
+                hideLoading();
+                showSnackbar('දෝෂයකි. කරුණාකර නැවත උත්සාහ කරන්න');
+                console.error(e);
+            }
+        }
+
+        // ============ STEPPER ============
+        function goToStep(step) {
+            currentStep = step;
+            document.querySelectorAll('.carousel-slide').forEach(s => s.classList.remove('active'));
+            document.querySelector(`.carousel-slide[data-step="${step}"]`).classList.add('active');
+            document.querySelectorAll('.step-dot').forEach((d, i) => {
+                d.classList.remove('active', 'done');
+                if (i === step) d.classList.add('active');
+                else if (i < step) d.classList.add('done');
+            });
+            document.querySelectorAll('.step-connector').forEach((c, i) => {
+                c.classList.toggle('done', i < step);
+            });
+        }
+
+        // ============ SPLASH ============
+        function initSplash() {
+            const fill = document.getElementById('loaderFill');
+            let p = 0;
+            const iv = setInterval(() => {
+                p += Math.random() * 7 + 3;
+                if (p >= 100) {
+                    p = 100;
+                    clearInterval(iv);
+                    setTimeout(() => {
+                        if (localStorage.getItem('ema_user')) {
+                            window.location.href = 'main.html';
+                        } else {
+                            showScreen('loginScreen');
+                        }
+                    }, 400);
+                }
+                fill.style.width = p + '%';
+            }, 100);
+        }
+
+        // ============ INIT ============
+        document.addEventListener('DOMContentLoaded', () => {
+            initSplash();
+
+            // Login
+            document.getElementById('loginBtn').addEventListener('click', () => {
+                const id = document.getElementById('emaIdInput').value.trim();
+                if (!id) { showSnackbar('කරුණාකර EMA හැඳුනුම්පත් අංකය ඇතුළත් කරන්න'); return; }
+                if (!/^\d{6}-E$/.test(id)) { showSnackbar('වලංගු ආකෘතිය: 123456-E'); return; }
+                loginWithId(id);
+            });
+
+            document.getElementById('emaIdInput').addEventListener('keypress', e => {
+                if (e.key === 'Enter') document.getElementById('loginBtn').click();
+            });
+
+            // Sign up
+            document.getElementById('signUpBtn').addEventListener('click', () => {
+                showScreen('signUpScreen');
+                goToStep(0);
+            });
+
+            document.getElementById('backToLogin').addEventListener('click', () => showScreen('loginScreen'));
+
+            // Carousel nav
+            document.querySelectorAll('.btn-next').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const next = parseInt(btn.dataset.next);
+                    if (currentStep === 0 && !document.getElementById('fullName').value.trim()) {
+                        showSnackbar('කරුණාකර ඔබගේ සම්පූර්ණ නම ඇතුළත් කරන්න'); return;
+                    }
+                    if (currentStep === 1 && !profilePicBase64) {
+                        showSnackbar('කරුණාකර පැතිකඩ ඡායාරූපයක් තෝරන්න'); return;
+                    }
+                    if (currentStep === 2) {
+                        const ph = document.getElementById('phoneNumber').value.trim();
+                        if (!ph || ph.length < 9) { showSnackbar('කරුණාකර වලංගු දුරකථන අංකයක් ඇතුළත් කරන්න'); return; }
+                    }
+                    goToStep(next);
+                });
+            });
+
+            document.querySelectorAll('.btn-prev').forEach(btn => {
+                btn.addEventListener('click', () => goToStep(parseInt(btn.dataset.prev)));
+            });
+
+            // Profile pic
+            document.getElementById('uploadPicBtn').addEventListener('click', () => document.getElementById('profilePicInput').click());
+            document.getElementById('profilePreview').addEventListener('click', () => document.getElementById('profilePicInput').click());
+
+            document.getElementById('profilePicInput').addEventListener('change', async e => {
+                const file = e.target.files[0];
+                if (file) {
+                    profilePicBase64 = await compressImage(file, 50);
+                    document.getElementById('profilePreview').innerHTML = `<img src="${profilePicBase64}" alt="Profile">`;
+                }
+            });
+
+            // Submit signup
+            document.getElementById('submitSignUp').addEventListener('click', async () => {
+                const fullName = document.getElementById('fullName').value.trim();
+                const phone = document.getElementById('phoneNumber').value.trim();
+                const email = document.getElementById('emailAddress').value.trim();
+
+                if (!fullName) { showSnackbar('කරුණාකර සම්පූර්ණ නම ඇතුළත් කරන්න'); goToStep(0); return; }
+                if (!profilePicBase64) { showSnackbar('කරුණාකර ඡායාරූපයක් තෝරන්න'); goToStep(1); return; }
+                if (!phone || phone.length < 9) { showSnackbar('කරුණාකර වලංගු දුරකථන අංකයක් ඇතුළත් කරන්න'); goToStep(2); return; }
+
+                const emaId = generateEmaId();
+                const userData = {
+                    emaId, fullName, phone,
+                    email: email || '',
+                    profilePic: profilePicBase64,
+                    registeredAt: new Date().toISOString()
+                };
+
+                showLoading();
+                try {
+                    await saveUser(emaId, userData);
+                    hideLoading();
+
+                    document.getElementById('newEmaId').textContent = emaId;
+                    showDialog('successDialog');
+                    document.getElementById('doneBtn').classList.add('hidden');
+                    document.getElementById('cardDownloadStatus').innerHTML =
+                        '<div class="md-spinner" style="width:20px;height:20px;border-width:2px"></div> E-Card සකසමින් පවතී...';
+
+                    setTimeout(async () => {
+                        try {
+                            await generateIdCard(userData);
+                            document.getElementById('cardDownloadStatus').innerHTML =
+                                '<span class="material-icons-round" style="font-size:20px;color:var(--md-primary)">download_done</span> E-Card සාර්ථකව බාගත විය';
+                        } catch (err) {
+                            document.getElementById('cardDownloadStatus').innerHTML =
+                                '<span class="material-icons-round" style="font-size:20px;color:var(--md-error)">error</span> E-Card බාගත කිරීමට නොහැකි විය';
+                            console.error(err);
+                        }
+                        document.getElementById('doneBtn').classList.remove('hidden');
+                    }, 1200);
+
+                    window._pendingUserData = userData;
+                } catch (err) {
+                    hideLoading();
+                    showSnackbar('ලියාපදිංචිය අසාර්ථක විය. කරුණාකර නැවත උත්සාහ කරන්න');
+                    console.error(err);
+                }
+            });
+
+            // Done
+            document.getElementById('doneBtn').addEventListener('click', () => {
+                hideDialog('successDialog');
+                if (window._pendingUserData) {
+                    localStorage.setItem('ema_user', JSON.stringify(window._pendingUserData));
+                    localStorage.setItem('ema_id', window._pendingUserData.emaId);
+                }
+                window.location.href = 'main.html';
+            });
+
+            // Forgot ID
+            document.getElementById('forgotIdBtn').addEventListener('click', () => {
+                document.getElementById('forgotStep1').classList.remove('hidden');
+                document.getElementById('forgotStep2').classList.add('hidden');
+                document.getElementById('forgotStep3').classList.add('hidden');
+                document.getElementById('forgotError').classList.remove('show');
+                document.getElementById('forgotLoading').classList.add('hidden');
+                document.getElementById('forgotPhone').value = '';
+                document.querySelectorAll('.otp-input').forEach(b => b.value = '');
+                showDialog('forgotDialog');
+            });
+
+            document.getElementById('closeForgotDialog').addEventListener('click', () => hideDialog('forgotDialog'));
+
+            // Send OTP
+            document.getElementById('sendOtpBtn').addEventListener('click', async () => {
+                const phone = document.getElementById('forgotPhone').value.trim();
+                if (!phone || phone.length < 9) {
+                    document.getElementById('forgotErrorText').textContent = 'කරුණාකර වලංගු දුරකථන අංකයක් ඇතුළත් කරන්න';
+                    document.getElementById('forgotError').classList.add('show');
+                    return;
+                }
+                document.getElementById('forgotError').classList.remove('show');
+                document.getElementById('forgotLoading').classList.remove('hidden');
+                document.getElementById('forgotStep1').style.opacity = '0.5';
+                document.getElementById('forgotStep1').style.pointerEvents = 'none';
+
+                try {
+                    foundUserData = await findUserByPhone(phone);
+                    if (!foundUserData) {
+                        document.getElementById('forgotLoading').classList.add('hidden');
+                        document.getElementById('forgotStep1').style.opacity = '1';
+                        document.getElementById('forgotStep1').style.pointerEvents = 'auto';
+                        document.getElementById('forgotErrorText').textContent = 'මෙම දුරකථන අංකයට අදාළ ගිණුමක් සොයාගත නොහැක';
+                        document.getElementById('forgotError').classList.add('show');
+                        return;
+                    }
+                    currentOtp = generateOtp();
+                    await sendSms(phone, `Your EMA OTP is ${currentOtp}`);
+                    document.getElementById('forgotLoading').classList.add('hidden');
+                    document.getElementById('forgotStep1').classList.add('hidden');
+                    document.getElementById('forgotStep2').classList.remove('hidden');
+                    document.querySelector('.otp-input[data-idx="0"]').focus();
+                } catch (err) {
+                    document.getElementById('forgotLoading').classList.add('hidden');
+                    document.getElementById('forgotStep1').style.opacity = '1';
+                    document.getElementById('forgotStep1').style.pointerEvents = 'auto';
+                    document.getElementById('forgotErrorText').textContent = 'දෝෂයකි. කරුණාකර නැවත උත්සාහ කරන්න';
+                    document.getElementById('forgotError').classList.add('show');
+                    console.error(err);
+                }
+            });
+
+            // OTP boxes
+            document.querySelectorAll('.otp-input').forEach((box, i) => {
+                box.addEventListener('input', e => {
+                    if (e.target.value.length === 1 && i < 3) {
+                        document.querySelector(`.otp-input[data-idx="${i + 1}"]`).focus();
+                    }
+                });
+                box.addEventListener('keydown', e => {
+                    if (e.key === 'Backspace' && !e.target.value && i > 0) {
+                        document.querySelector(`.otp-input[data-idx="${i - 1}"]`).focus();
+                    }
+                });
+            });
+
+            // Verify OTP
+            document.getElementById('verifyOtpBtn').addEventListener('click', () => {
+                const entered = Array.from(document.querySelectorAll('.otp-input')).map(b => b.value).join('');
+                if (entered.length !== 4) { showSnackbar('කරුණාකර සංඛ්‍යා 4ම ඇතුළත් කරන්න'); return; }
+                if (entered === currentOtp) {
+                    document.getElementById('forgotStep2').classList.add('hidden');
+                    document.getElementById('foundEmaId').textContent = foundUserData.emaId;
+                    document.getElementById('forgotStep3').classList.remove('hidden');
+                } else {
+                    showSnackbar('OTP කේතය වැරදියි. කරුණාකර නැවත උත්සාහ කරන්න');
+                    document.querySelectorAll('.otp-input').forEach(b => b.value = '');
+                    document.querySelector('.otp-input[data-idx="0"]').focus();
+                }
+            });
+
+            // Use found ID
+            document.getElementById('useFoundId').addEventListener('click', () => {
+                hideDialog('forgotDialog');
+                if (foundUserData) loginWithId(foundUserData.emaId);
+            });
+
+            // E-Card scanner
+            document.getElementById('eCardBtn').addEventListener('click', () => {
+                showDialog('eCardDialog');
+                startScanner();
+            });
+
+            document.getElementById('closeECardDialog').addEventListener('click', () => {
+                stopScanner();
+                hideDialog('eCardDialog');
+            });
+        });
+
+        window.addEventListener('beforeunload', () => stopScanner());
+    </script>
+</body>
+</html>

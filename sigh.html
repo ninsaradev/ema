@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EMA - නිරීක්ෂණ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Sinhala:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        :root{
+            --p:#1B5E20;--op:#FFF;--pc:#A5D6A7;--opc:#0A3A0A;
+            --sc:#D0E8D2;--osc:#0C1F12;--sf:#F8FAF6;--scl:#FFF;
+            --sc2:#ECF0EA;--sc3:#E7EAE4;--sc4:#E1E4DE;
+            --os:#191D19;--osv:#414942;--ol:#727970;--olv:#C1C9BF;
+            --er:#BA1A1A;--erc:#FFDAD6;--oer:#FFF;
+            --r-sm:8px;--r-md:12px;--r-lg:16px;--r-xl:28px;--r-full:9999px;
+            --e1:0 1px 3px 1px rgba(0,0,0,.08),0 1px 2px 0 rgba(0,0,0,.12);
+            --e2:0 2px 6px 2px rgba(0,0,0,.08),0 1px 2px 0 rgba(0,0,0,.12);
+        }
+        html,body{height:100%;overflow:hidden;font-family:'Noto Sans Sinhala','Roboto',sans-serif;background:var(--sf);color:var(--os)}
+        .hidden{display:none!important}
+        .app{display:flex;flex-direction:column;height:100dvh;height:100vh;overflow:hidden}
+
+        .fload{display:none;position:fixed;inset:0;background:var(--sf);z-index:9999;justify-content:center;align-items:center;flex-direction:column;gap:12px}
+        .fload.show{display:flex}
+        .sp{width:32px;height:32px;border:3px solid var(--sc4);border-top-color:var(--p);border-radius:50%;animation:sp .8s linear infinite}
+        .sp.lg{width:40px;height:40px;border-width:4px}
+        @keyframes sp{to{transform:rotate(360deg)}}
+
+        /* TOPBAR */
+        .topbar{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--scl);border-bottom:1px solid var(--olv);flex-shrink:0;z-index:100}
+        .topbar h1{font-size:15px;font-weight:700;color:var(--p);flex:1}
+        .ib{width:36px;height:36px;border:none;background:transparent;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--osv);transition:background .12s;flex-shrink:0}
+        .ib:hover{background:var(--sc3)}
+
+        /* FILTER BAR */
+        .filter-bar{display:flex;gap:6px;padding:8px 12px;overflow-x:auto;flex-shrink:0;background:var(--scl);border-bottom:1px solid var(--sc2);-webkit-overflow-scrolling:touch}
+        .filter-bar::-webkit-scrollbar{display:none}
+        .fc{display:flex;align-items:center;gap:4px;padding:6px 12px;border:1px solid var(--olv);border-radius:var(--r-full);font-size:10px;font-weight:500;cursor:pointer;background:var(--scl);color:var(--osv);white-space:nowrap;transition:all .12s;flex-shrink:0;font-family:inherit}
+        .fc.active{background:var(--p);color:var(--op);border-color:var(--p)}
+        .fc .material-icons-round{font-size:14px}
+
+        /* STATS BAR */
+        .stats-bar{display:flex;gap:6px;padding:6px 12px;background:var(--sc2);flex-shrink:0}
+        .stat-chip{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--osv)}
+        .stat-chip .dot{width:8px;height:8px;border-radius:50%}
+        .stat-chip .dot.bl{background:#1565C0}
+        .stat-chip .dot.rd{background:#C62828}
+        .stat-chip .dot.gr{background:var(--p)}
+        .stat-chip strong{font-weight:700;color:var(--os);font-family:'Roboto',monospace}
+
+        /* SCROLL */
+        .scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:8px 12px 20px}
+
+        /* REPORT PILL */
+        .rp{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--scl);border:1px solid var(--olv);border-radius:var(--r-md);margin-bottom:6px;cursor:pointer;transition:background .12s}
+        .rp:hover{background:var(--sc2)}
+        .rp:active{transform:scale(.99)}
+        .rp-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+        .rp-dot.bl{background:#1565C0}
+        .rp-dot.rd{background:#C62828}
+        .rp-body{flex:1;min-width:0}
+        .rp-title{font-size:12px;font-weight:600;color:var(--os);margin-bottom:1px;display:flex;align-items:center;gap:4px}
+        .rp-title .ag{display:inline-flex;align-items:center;gap:1px;background:#E8F5E9;color:var(--p);padding:0 5px;border-radius:var(--r-full);font-size:7px;font-weight:600}
+        .rp-title .ag .material-icons-round{font-size:8px}
+        .rp-sub{font-size:10px;color:var(--osv);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .rp-meta{display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0}
+        .rp-time{font-size:9px;color:var(--ol);font-family:'Roboto',sans-serif}
+        .rp-dist{font-size:9px;color:var(--p);font-weight:500;background:var(--pc);padding:1px 6px;border-radius:var(--r-full)}
+        .rp-emerg{display:flex;align-items:center;gap:2px;font-size:8px;color:var(--er);font-weight:600;margin-top:1px}
+        .rp-emerg .material-icons-round{font-size:10px}
+
+        .empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:50px 20px;gap:10px}
+        .empty .material-icons-round{font-size:44px;color:var(--olv)}
+        .empty h3{font-size:13px;color:var(--osv)}
+
+        /* SCRIM */
+        .scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;justify-content:center;align-items:flex-end}
+        .scrim.show{display:flex}
+        .scrim.center{align-items:center;padding:12px}
+        .sheet{background:var(--scl);border-radius:var(--r-xl) var(--r-xl) 0 0;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;animation:sUp .2s ease-out}
+        @keyframes sUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+        .sh-handle{width:32px;height:4px;background:var(--olv);border-radius:2px;margin:8px auto 0}
+        .sh-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 6px}
+        .sh-hdr h3{font-size:15px;font-weight:600;flex:1}
+        .sh-body{padding:0 16px 20px}
+        .dlg{background:var(--scl);border-radius:var(--r-xl);padding:18px;width:100%;max-width:400px;max-height:85vh;overflow-y:auto;animation:dIn .2s ease-out}
+        @keyframes dIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+        .dlg-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+        .dlg-h h3{font-size:14px;font-weight:600;flex:1}
+        .da{display:flex;justify-content:flex-end;gap:6px;margin-top:12px}
+
+        /* DETAIL SECTIONS */
+        .det-section{margin-bottom:14px}
+        .det-label{font-size:9px;color:var(--ol);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;display:flex;align-items:center;gap:4px}
+        .det-label .material-icons-round{font-size:12px}
+        .det-value{font-size:13px;font-weight:500;color:var(--os)}
+        .det-value.big{font-size:18px;font-weight:700;color:var(--p);font-family:'Roboto',monospace}
+        .det-row{display:flex;gap:8px}
+        .det-card{flex:1;background:var(--sc2);border-radius:var(--r-sm);padding:10px;text-align:center}
+        .det-card .det-val{font-size:20px;font-weight:700;color:var(--os);font-family:'Roboto',monospace}
+        .det-card .det-lbl{font-size:9px;color:var(--osv)}
+        .det-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:var(--r-full);font-size:11px;font-weight:500}
+        .det-chip.sight{background:#E3F2FD;color:#0D47A1}
+        .det-chip.acc{background:#FFEBEE;color:#B71C1C}
+        .det-chip.emerg{background:var(--erc);color:var(--er)}
+        .det-chip.agent{background:#E8F5E9;color:var(--p)}
+        .det-chip .material-icons-round{font-size:14px}
+        .det-desc{font-size:12px;color:var(--os);background:var(--sc2);border-radius:var(--r-sm);padding:10px;font-style:italic;line-height:1.5}
+
+        /* IMAGES */
+        .det-img-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+        .det-img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:var(--r-sm);cursor:pointer}
+
+        /* MAP */
+        .det-map{width:100%;height:180px;border-radius:var(--r-md);overflow:hidden;margin-top:6px}
+        .leaflet-control-zoom,.leaflet-control-attribution{display:none!important}
+
+        /* REPORTER */
+        .reporter-card{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--sc2);border-radius:var(--r-sm)}
+        .reporter-av{width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--pc);background:var(--sc2)}
+        .reporter-av-ph{width:32px;height:32px;border-radius:50%;background:var(--pc);display:flex;align-items:center;justify-content:center}
+        .reporter-av-ph .material-icons-round{font-size:16px;color:var(--opc)}
+        .reporter-info{flex:1}
+        .reporter-nm{font-size:12px;font-weight:600;color:var(--os)}
+        .reporter-id{font-size:9px;color:var(--ol);font-family:'Roboto',monospace}
+
+        /* ACTIONS */
+        .det-actions{display:flex;gap:6px;flex-wrap:wrap}
+        .det-actions .btn{flex:1;min-width:100px}
+
+        /* DELETE CONFIRM */
+        .del-reason{width:100%;padding:10px 12px;border:1px solid var(--ol);border-radius:var(--r-sm);font-size:12px;font-family:inherit;background:var(--scl);color:var(--os);outline:none;appearance:none;cursor:pointer;margin-bottom:10px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cpath fill='%23727970' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;padding-right:32px}
+        .del-reason:focus{border-color:var(--p)}
+        .agree-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:12px;cursor:pointer;user-select:none}
+        .agree-box{width:20px;height:20px;border:2px solid var(--ol);border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .12s}
+        .agree-row.checked .agree-box{background:var(--p);border-color:var(--p)}
+        .agree-box .material-icons-round{font-size:14px;color:var(--op);opacity:0}
+        .agree-row.checked .agree-box .material-icons-round{opacity:1}
+        .agree-text{font-size:11px;color:var(--osv);line-height:1.4}
+
+        /* BUTTONS */
+        .btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 14px;border:none;border-radius:var(--r-full);font-size:11px;font-weight:500;font-family:inherit;cursor:pointer;transition:all .12s;min-height:34px}
+        .btn .material-icons-round{font-size:16px}
+        .btn-f{background:var(--p);color:var(--op)}.btn-f:hover{box-shadow:var(--e1)}
+        .btn-o{background:transparent;color:var(--p);border:1px solid var(--ol)}
+        .btn-t{background:transparent;color:var(--p);padding:6px 10px;min-height:auto}
+        .btn-d{background:var(--er);color:var(--oer)}
+        .btn-w{width:100%}
+
+        .snk{position:fixed;bottom:16px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--os);color:var(--sf);padding:10px 16px;border-radius:var(--r-sm);font-size:11px;z-index:3000;transition:transform .3s;max-width:88%;font-family:inherit}
+        .snk.show{transform:translateX(-50%) translateY(0)}
+
+        /* IMAGE VIEWER */
+        .img-viewer{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:600;justify-content:center;align-items:center}
+        .img-viewer.show{display:flex}
+        .img-viewer img{max-width:95%;max-height:90%;object-fit:contain}
+        .img-viewer-close{position:absolute;top:12px;right:12px;width:40px;height:40px;background:rgba(255,255,255,.2);border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#FFF}
+    </style>
+</head>
+<body>
+<div class="app">
+    <div class="fload show" id="pl"><div class="sp lg"></div><p style="font-size:12px;color:var(--osv)">නිරීක්ෂණ පූරණය වෙමින්...</p></div>
+
+    <div class="topbar">
+        <button class="ib" onclick="location.href='main.html'"><span class="material-icons-round">arrow_back</span></button>
+        <h1>නිරීක්ෂණ</h1>
+        <button class="ib" onclick="location.href='main.html'"><span class="material-icons-round">home</span></button>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filter-bar" id="filterBar">
+        <button class="fc active" data-f="all"><span class="material-icons-round">filter_list</span>සියල්ල</button>
+        <button class="fc" data-f="sighting"><span class="material-icons-round">visibility</span>නිරීක්ෂණ</button>
+        <button class="fc" data-f="accident"><span class="material-icons-round">report</span>අනතුරු</button>
+        <button class="fc" data-f="emergency"><span class="material-icons-round">emergency</span>හදිසි</button>
+        <button class="fc" data-f="tusker"><span class="material-icons-round">star</span>දළ ඇතා</button>
+        <button class="fc" data-f="agent"><span class="material-icons-round">verified</span>නියෝජිත</button>
+        <button class="fc" data-f="mine"><span class="material-icons-round">person</span>මගේ</button>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-bar" id="statsBar">
+        <div class="stat-chip"><div class="dot bl"></div>නිරීක්ෂණ <strong id="stS">0</strong></div>
+        <div class="stat-chip"><div class="dot rd"></div>අනතුරු <strong id="stA">0</strong></div>
+        <div class="stat-chip"><div class="dot gr"></div>මුළු <strong id="stT">0</strong></div>
+    </div>
+
+    <div class="scroll" id="scroll">
+        <div id="listContainer"></div>
+    </div>
+</div>
+
+<!-- DETAIL SHEET -->
+<div class="scrim" id="detScrim">
+    <div class="sheet">
+        <div class="sh-handle"></div>
+        <div class="sh-hdr"><h3 id="detTitle">වාර්තා විස්තර</h3><button class="ib" id="detClose"><span class="material-icons-round">close</span></button></div>
+        <div class="sh-body" id="detBody"></div>
+    </div>
+</div>
+
+<!-- DELETE CONFIRM -->
+<div class="scrim center" id="delScrim">
+    <div class="dlg" style="max-width:380px">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--erc);display:flex;align-items:center;justify-content:center;margin:0 auto 10px"><span class="material-icons-round" style="font-size:22px;color:var(--er)">delete_forever</span></div>
+        <h3 style="text-align:center;font-size:14px;margin-bottom:8px">මෙම වාර්තාව මකන්න</h3>
+        <p style="text-align:center;font-size:11px;color:var(--osv);margin-bottom:12px">මෙම ක්‍රියාව ආපසු හැරවිය නොහැක. වාර්තාකරුට දැනුම්දීමක් යවනු ඇත.</p>
+        <select class="del-reason" id="delReason">
+            <option value="">-- මකා දැමීමේ හේතුව --</option>
+            <option value="සාවද්‍ය තොරතුරු / False information">සාවද්‍ය තොරතුරු</option>
+            <option value="අනුපිටපත් වාර්තාව / Duplicate report">අනුපිටපත් වාර්තාව</option>
+            <option value="අනුචිත අන්තර්ගතය / Inappropriate content">අනුචිත අන්තර්ගතය</option>
+            <option value="ස්ථාන දත්ත වැරදියි / Wrong location data">ස්ථාන දත්ත වැරදියි</option>
+            <option value="පරීක්ෂා කළ නොහැක / Unverifiable">පරීක්ෂා කළ නොහැක</option>
+            <option value="වෙනත් / Other">වෙනත්</option>
+        </select>
+        <div class="agree-row" id="agreeRow">
+            <div class="agree-box"><span class="material-icons-round">check</span></div>
+            <div class="agree-text">මෙම වාර්තාව මකා දැමීම නිවැරදි බවත්, මෙය EMA නියෝජිතයෙකු ලෙස මාගේ වගකීම යටතේ සිදු කරන බවත් මම තහවුරු කරමි.</div>
+        </div>
+        <div class="da" style="justify-content:center;gap:8px">
+            <button class="btn btn-t" id="delCancel">අවලංගුයි</button>
+            <button class="btn btn-d" id="delConfirm"><span class="material-icons-round">delete</span>මකා දමන්න</button>
+        </div>
+    </div>
+</div>
+
+<!-- IMAGE VIEWER -->
+<div class="img-viewer" id="imgViewer">
+    <button class="img-viewer-close" id="imgViewClose"><span class="material-icons-round">close</span></button>
+    <img id="imgViewSrc" src="" alt="">
+</div>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+import{getDatabase,ref,get,child,remove}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-database.js";
+
+const fb=initializeApp({apiKey:"AIzaSyBxhaRpjccuhoKE3T8WYRihy1rDXtRhGO4",authDomain:"ema-4-b10bd.firebaseapp.com",databaseURL:"https://ema-4-b10bd-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"ema-4-b10bd",storageBucket:"ema-4-b10bd.firebasestorage.app",messagingSenderId:"149141817573",appId:"1:149141817573:web:409bfb4d9c2b84cf742c0c"});
+const db=getDatabase(fb);
+const SMS_B='2978|LJtLlcBp7kBtuwPflj9rgkFSB4nb9FQIVMgNhOU918611bc8',SMS_S='TextLKDemo';
+
+let U=null,eid=null,isAgent=false,allReports=[],currentFilter='all',currentDetReport=null,deleteReportId=null,detMap=null;
+const $=i=>document.getElementById(i);
+const S=i=>$(i).classList.add('show');
+const H=i=>$(i).classList.remove('show');
+function snk(m){let s=document.querySelector('.snk');if(!s){s=document.createElement('div');s.className='snk';document.body.appendChild(s)}s.textContent=m;s.classList.add('show');setTimeout(()=>s.classList.remove('show'),3e3)}
+
+async function sendSms(ph,msg){let f=ph.replace(/[\s+]/g,'');if(f.startsWith('0'))f='94'+f.substring(1);else if(!f.startsWith('94'))f='94'+f;try{await fetch('https://app.text.lk/api/v3/sms/send',{method:'POST',headers:{'Authorization':`Bearer ${SMS_B}`,'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({recipient:f,sender_id:SMS_S,type:'plain',message:msg})})}catch(e){}return true}
+
+function fk(i){return i.replace(/-/g,'_')}
+function timeStr(ts){if(!ts)return'---';const d=new Date(ts);return d.toLocaleDateString('si-LK',{year:'numeric',month:'short',day:'numeric'})+' '+d.toLocaleTimeString('si-LK',{hour:'2-digit',minute:'2-digit'})}
+function timeAgo(ts){const d=Date.now()-new Date(ts).getTime();const m=Math.floor(d/6e4);if(m<1)return'දැන්';if(m<60)return m+'m';const h=Math.floor(m/60);if(h<24)return h+'h';return Math.floor(h/24)+'d'}
+
+async function init(){
+    const raw=localStorage.getItem('ema_user'),sid=localStorage.getItem('ema_id');
+    if(!raw||!sid){location.href='index.html';return}
+    eid=sid;U=JSON.parse(raw);
+    isAgent=U.agent===true||localStorage.getItem('agent')==='true';
+    try{const snap=await get(child(ref(db),'users/'+fk(eid)));if(snap.exists()){U=snap.val();localStorage.setItem('ema_user',JSON.stringify(U))}}catch(e){}
+    await loadReports();
+    setupFilters();
+    renderList();
+    $('pl').classList.remove('show');
+}
+
+async function loadReports(){
+    allReports=[];
+    try{
+        const snap=await get(child(ref(db),'reports'));
+        if(!snap.exists())return;
+        const data=snap.val();
+        for(const k in data){const r=data[k];r._id=k;allReports.push(r)}
+        allReports.sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
+    }catch(e){console.warn(e)}
+}
+
+function getFiltered(){
+    let list=allReports;
+    switch(currentFilter){
+        case'sighting':list=list.filter(r=>r.type==='sighting');break;
+        case'accident':list=list.filter(r=>r.type==='accident');break;
+        case'emergency':list=list.filter(r=>r.emergency===true);break;
+        case'tusker':list=list.filter(r=>r.elType==='tusker');break;
+        case'agent':list=list.filter(r=>r.agentReport===true);break;
+        case'mine':list=list.filter(r=>r.reporterEmaId===eid);break;
+    }
+    return list;
+}
+
+function updateStats(){
+    const list=getFiltered();
+    const s=list.filter(r=>r.type==='sighting').length;
+    const a=list.filter(r=>r.type==='accident').length;
+    $('stS').textContent=s;$('stA').textContent=a;$('stT').textContent=list.length;
+}
+
+function setupFilters(){
+    document.querySelectorAll('.fc').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+            document.querySelectorAll('.fc').forEach(b=>b.classList.remove('active'));
+            btn.classList.add('active');
+            currentFilter=btn.dataset.f;
+            renderList();
+        });
+    });
+}
+
+function renderList(){
+    updateStats();
+    const container=$('listContainer');container.innerHTML='';
+    const list=getFiltered();
+    if(!list.length){container.innerHTML='<div class="empty"><span class="material-icons-round">search_off</span><h3>වාර්තා සොයාගත නොහැක</h3></div>';return}
+    list.forEach(r=>{
+        const pill=document.createElement('div');pill.className='rp';
+        const isSight=r.type==='sighting';
+        let title='',sub='';
+        if(isSight){
+            title=`අලි ${r.count||1}ක් නිරීක්ෂණය`;
+            sub=`${r.elType==='tusker'?'දළ ඇතා':'අලියා'}${r.description?' · '+r.description:''}`;
+        }else{
+            const parts=[];if(r.injury>0)parts.push(`තුවාල ${r.injury}`);if(r.death>0)parts.push(`මරණ ${r.death}`);
+            title='අලි අනතුරක්';
+            sub=`${parts.join(', ')}${r.description?' · '+r.description:''}`;
+        }
+        const agB=r.agentReport?'<span class="ag"><span class="material-icons-round">verified</span>Agent</span>':'';
+        const emergH=r.emergency?'<div class="rp-emerg"><span class="material-icons-round">warning</span>හදිසි</div>':'';
+        pill.innerHTML=`<div class="rp-dot ${isSight?'bl':'rd'}"></div><div class="rp-body"><div class="rp-title">${title} ${agB}</div><div class="rp-sub">${sub}</div></div><div class="rp-meta"><div class="rp-time">${timeAgo(r.timestamp)}</div><div class="rp-dist">${r.district||''}</div>${emergH}</div>`;
+        pill.onclick=()=>openDetail(r);
+        container.appendChild(pill);
+    });
+}
+
+// DETAIL
+function openDetail(r){
+    currentDetReport=r;
+    const isSight=r.type==='sighting';
+    $('detTitle').textContent=isSight?'නිරීක්ෂණ විස්තර':'අනතුරු විස්තර';
+    let html='';
+
+    // Type chip
+    html+=`<div class="det-section"><div class="det-label"><span class="material-icons-round">category</span>වාර්තා වර්ගය</div>`;
+    html+=`<div class="det-chip ${isSight?'sight':'acc'}"><span class="material-icons-round">${isSight?'visibility':'report'}</span>${isSight?'අලි නිරීක්ෂණය':'අලි අනතුරක්'}</div>`;
+    if(r.agentReport)html+=` <div class="det-chip agent"><span class="material-icons-round">verified</span>නියෝජිත වාර්තාව</div>`;
+    if(r.emergency)html+=` <div class="det-chip emerg"><span class="material-icons-round">emergency</span>හදිසි සහාය අවශ්‍යයි</div>`;
+    html+=`</div>`;
+
+    // Counts
+    if(isSight){
+        html+=`<div class="det-section"><div class="det-row"><div class="det-card"><div class="det-val">${r.count||1}</div><div class="det-lbl">අලි ගණන</div></div><div class="det-card"><div class="det-val" style="font-size:14px">${r.elType==='tusker'?'දළ ඇතා':'අලියා'}</div><div class="det-lbl">වර්ගය</div></div></div></div>`;
+    }else{
+        html+=`<div class="det-section"><div class="det-row">`;
+        html+=`<div class="det-card"><div class="det-val" style="color:#E65100">${r.injury||0}</div><div class="det-lbl">තුවාල</div></div>`;
+        html+=`<div class="det-card"><div class="det-val" style="color:#B71C1C">${r.death||0}</div><div class="det-lbl">මරණ</div></div>`;
+        html+=`</div></div>`;
+    }
+
+    // District
+    html+=`<div class="det-section"><div class="det-label"><span class="material-icons-round">location_on</span>දිස්ත්‍රික්කය</div><div class="det-value">${r.district||'---'} ${r.districtEn?'('+r.districtEn+')':''}</div></div>`;
+
+    // Time
+    html+=`<div class="det-section"><div class="det-label"><span class="material-icons-round">schedule</span>වේලාව</div><div class="det-value">${timeStr(r.timestamp)}</div></div>`;
+
+    // Description
+    if(r.description){html+=`<div class="det-section"><div class="det-label"><span class="material-icons-round">description</span>විස්තරය</div><div class="det-desc">"${escHtml(r.description)}"</div></div>`}
+
+    // Reporter
+    html+=`<div class="det-section"><div class="det-label"><span class="material-icons-round">person</span>වාර්තාකරු</div><div class="reporter-card">`;
+    html+=`<div class="reporter-av-ph"><span class="material-icons-round">person</span></div>`;
+    html+=`<div class="reporter-info"><div class="reporter-nm">${escHtml(r.reporterName||'---')}</div><div class="reporter-id">${r.reporterEmaId||'---'} · ${r.reporterPhone||''}</div></div></div></div>`;
+
+    // Coordinates
+    if(r.lat&&r.lng){
+        html+=`<div class="det-section"><div class="det-label"><span class="material-icons-round">gps_fixed</span>ඛණ්ඩාංක</div><div class="det-value" style="font-size:11px;font-family:'Roboto',monospace">${r.lat.toFixed(6)}, ${r.lng.toFixed(6)}</div><div class="det-map" id="detMapContainer"></div></div>`;
+    }
+
+    // Images
+    const imgs=(r.images||[]).filter(Boolean);
+    if(imgs.length){
+        html+=`<div class="det-section"><div class="det-label"><span class="material-icons-round">photo_library</span>ඡායාරූප (${imgs.length})</div><div class="det-img-grid">`;
+        imgs.forEach((img,i)=>{html+=`<img src="${img}" class="det-img" data-i="${i}" alt="">`});
+        html+=`</div></div>`;
+    }
+
+    // Actions
+    html+=`<div class="det-section"><div class="det-actions">`;
+    html+=`<button class="btn btn-o" id="detPdf"><span class="material-icons-round">download</span>PDF බාගත</button>`;
+    if(isAgent&&r.reporterEmaId!==eid){
+        html+=`<button class="btn btn-d" id="detDelete"><span class="material-icons-round">delete</span>මකන්න</button>`;
+    }
+    html+=`</div></div>`;
+
+    $('detBody').innerHTML=html;
+
+    // Bind map
+    if(r.lat&&r.lng){
+        setTimeout(()=>{
+            if(detMap){detMap.remove();detMap=null}
+            const mc=document.getElementById('detMapContainer');
+            if(mc){
+                detMap=L.map(mc,{zoomControl:false,attributionControl:false,dragging:false,scrollWheelZoom:false}).setView([r.lat,r.lng],13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(detMap);
+                const color=isSight?'#1565C0':'#C62828';
+                const icon=L.divIcon({className:'',html:`<div style="width:16px;height:16px;background:${color};border-radius:50%;border:3px solid #FFF;box-shadow:0 1px 4px rgba(0,0,0,.3)"></div>`,iconSize:[16,16],iconAnchor:[8,8]});
+                L.marker([r.lat,r.lng],{icon}).addTo(detMap);
+            }
+        },200);
+    }
+
+    // Bind image viewer
+    document.querySelectorAll('.det-img').forEach(img=>{
+        img.onclick=()=>{$('imgViewSrc').src=img.src;$('imgViewer').classList.add('show')};
+    });
+
+    // Bind PDF
+    setTimeout(()=>{
+        const pdfBtn=document.getElementById('detPdf');
+        if(pdfBtn)pdfBtn.onclick=()=>generatePdf(r);
+        const delBtn=document.getElementById('detDelete');
+        if(delBtn)delBtn.onclick=()=>{deleteReportId=r._id;H('detScrim');agreed=false;$('agreeRow').classList.remove('checked');$('delReason').value='';S('delScrim')};
+    },100);
+
+    S('detScrim');
+}
+$('detClose').onclick=()=>{H('detScrim');if(detMap){detMap.remove();detMap=null}};
+
+function escHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+// IMAGE VIEWER
+$('imgViewClose').onclick=()=>$('imgViewer').classList.remove('show');
+$('imgViewer').onclick=e=>{if(e.target===$('imgViewer'))$('imgViewer').classList.remove('show')};
+
+// DELETE
+let agreed=false;
+$('agreeRow').onclick=()=>{agreed=!agreed;$('agreeRow').classList.toggle('checked',agreed)};
+$('delCancel').onclick=()=>{deleteReportId=null;H('delScrim')};
+$('delConfirm').onclick=async()=>{
+    const reason=$('delReason').value;
+    if(!reason){snk('හේතුව තෝරන්න');return}
+    if(!agreed){snk('එකඟතාව ලබා දෙන්න');return}
+    if(!deleteReportId)return;
+
+    H('delScrim');$('pl').classList.add('show');
+
+    const report=allReports.find(r=>r._id===deleteReportId);
+    try{
+        await remove(ref(db,'reports/'+deleteReportId));
+        // Notify reporter
+        if(report&&report.reporterPhone){
+            const msg=`EMA දැනුම්දීම: ඔබ ${report.district||''} දිස්ත්‍රික්කයේ ඉදිරිපත් කළ වාර්තාව EMA නියෝජිතයෙකු විසින් මකා දමන ලදී. හේතුව: ${reason}. වැඩිදුර තොරතුරු සඳහා EMA අමතන්න. | EMA Notice: Your report in ${report.districtEn||''} has been removed by an EMA Agent. Reason: ${reason}.`;
+            await sendSms(report.reporterPhone,msg);
+        }
+        snk('වාර්තාව මකා දැනුම්දීමක් යවන ලදී');
+        await loadReports();renderList();
+    }catch(e){snk('අසාර්ථකයි');console.error(e)}
+    deleteReportId=null;
+    $('pl').classList.remove('show');
+};
+
+// PDF
+async function generatePdf(r){
+    const{jsPDF}=window.jspdf;
+    const doc=new jsPDF('p','mm','a4');
+    const W=210,M=15;let Y=M;
+
+    // Header
+    doc.setFillColor(27,94,32);doc.rect(0,0,W,30,'F');
+    doc.setTextColor(255,255,255);doc.setFontSize(18);
+    doc.text('EMA - Elephant Monitoring App',W/2,14,{align:'center'});
+    doc.setFontSize(10);doc.text('Report Details',W/2,22,{align:'center'});
+    Y=40;
+
+    doc.setTextColor(33,33,33);doc.setFontSize(11);
+
+    const isSight=r.type==='sighting';
+
+    // Type
+    doc.setFontSize(8);doc.setTextColor(117,117,117);doc.text('Report Type',M,Y);Y+=5;
+    doc.setFontSize(12);doc.setTextColor(33,33,33);doc.text(isSight?'Elephant Sighting':'Elephant Accident',M,Y);Y+=8;
+
+    // Counts
+    if(isSight){
+        doc.setFontSize(8);doc.setTextColor(117,117,117);doc.text('Elephant Count',M,Y);Y+=5;
+        doc.setFontSize(14);doc.setTextColor(27,94,32);doc.text(String(r.count||1),M,Y);
+        doc.setFontSize(10);doc.setTextColor(33,33,33);doc.text('  |  Type: '+(r.elType==='tusker'?'Tusker':'Elephant'),M+12,Y);Y+=8;
+    }else{
+        doc.setFontSize(8);doc.setTextColor(117,117,117);doc.text('Injuries / Deaths',M,Y);Y+=5;
+        doc.setFontSize(12);doc.setTextColor(33,33,33);doc.text(`Injuries: ${r.injury||0}  |  Deaths: ${r.death||0}`,M,Y);Y+=6;
+        if(r.emergency){doc.setTextColor(186,26,26);doc.setFontSize(9);doc.text('EMERGENCY HELP NEEDED',M,Y);Y+=5}
+        Y+=3;
+    }
+
+    // District
+    doc.setFontSize(8);doc.setTextColor(117,117,117);doc.text('District',M,Y);Y+=5;
+    doc.setFontSize(11);doc.setTextColor(33,33,33);doc.text(`${r.district||'---'} (${r.districtEn||''})`,M,Y);Y+=8;
+
+    // Time
+    doc.setFontSize(8);doc.setTextColor(117,117,117);doc.text('Date & Time',M,Y);Y+=5;
+    doc.setFontSize(10);doc.setTextColor(33,33,33);doc.text(timeStr(r.timestamp),M,Y);Y+=8;
+
+    // Coordinates
+    if(r.lat&&r.lng){
+        doc.setFontSize(8);doc.setTextColor(117,117,117);doc.text('Coordinates',M,Y);Y+=5;
+        doc.setFontSize(10);doc.setTextColor(33,33,33);doc.text(`${r.lat.toFixed(6)}, ${r.lng.toFixed(6)}`,M,Y);Y+=8;
+    }
+
+    // Description
+    if(r.description){
+        doc.setFontSize(8);doc.setTextColor(117,117,117);doc.text('Description',M,Y);Y+=5;
+        doc.setFontSize(10);doc.setTextColor(33,33,33);
+        const lines=doc.splitTextToSize(r.description,W-2*M);
+        doc.text(lines,M,Y);Y+=lines.length*5+5;
+    }
+
+    // Reporter
+    doc.setFontSize(8);doc.setTextColor(117,117,117);doc.text('Reporter',M,Y);Y+=5;
+    doc.setFontSize(10);doc.setTextColor(33,33,33);doc.text(`${r.reporterName||'---'} (${r.reporterEmaId||''})`,M,Y);Y+=5;
+    doc.setFontSize(9);doc.text(`Phone: ${r.reporterPhone||'---'}`,M,Y);Y+=6;
+    if(r.agentReport){doc.setTextColor(27,94,32);doc.setFontSize(9);doc.text('* Reported by EMA Agent',M,Y);Y+=5}
+
+    // Images
+    const imgs=(r.images||[]).filter(Boolean);
+    if(imgs.length){
+        Y+=5;doc.setFontSize(8);doc.setTextColor(117,117,117);doc.text(`Images (${imgs.length})`,M,Y);Y+=5;
+        for(let i=0;i<Math.min(imgs.length,2);i++){
+            if(Y>240){doc.addPage();Y=M}
+            try{doc.addImage(imgs[i],'JPEG',M,Y,80,60);Y+=65}catch(e){}
+        }
+    }
+
+    // Footer
+    const fY=287;
+    doc.setFillColor(27,94,32);doc.rect(0,fY-5,W,10,'F');
+    doc.setTextColor(255,255,255);doc.setFontSize(7);
+    doc.text('EMA - Elephant Monitoring App | Generated: '+new Date().toLocaleString(),W/2,fY,{align:'center'});
+
+    doc.save(`EMA_Report_${r._id||'report'}.pdf`);
+    snk('PDF බාගත විය');
+}
+
+init();
+</script>
+</body>
+</html>
